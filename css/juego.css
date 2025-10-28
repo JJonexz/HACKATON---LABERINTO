@@ -1,0 +1,137 @@
+/* Estilo general del cuerpo, similar a tu index.css */
+body {
+    font-family: 'Courier New', monospace;
+    background: radial-gradient(circle at center, #190000 0%, #090000 50%, #000000 100%);
+    color: #ff1a1a;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden; /* Evita barras de desplazamiento */
+    text-shadow:
+        0 0 10px #ff0000,
+        0 0 25px #ff0000;
+}
+
+/* Modificado para que ocupe toda la pantalla y centre el canvas */
+.game-container {
+    position: relative;
+    text-align: center;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    width: 100vw; /* 100% del ancho del viewport */
+    height: 100vh; /* 100% del alto del viewport */
+    display: flex;
+    /* Cambiado de align-items: center; para que el canvas se posicione debajo del header */
+    justify-content: center; 
+    align-items: flex-start; /* Alinea el contenido (el canvas) al inicio */
+}
+
+/* Nueva capa para el encabezado y el temporizador (fijos) */
+.header-overlay {
+    /* Aseguramos que el encabezado esté arriba y se extienda por todo el ancho */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50; /* Por encima del canvas */
+    background: rgba(0, 0, 0, 0.8); /* Fondo semitransparente */
+    padding: 10px 0;
+    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    box-sizing: border-box;
+}
+
+.header-overlay h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+#timer-container {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+#timer {
+    color: #00FF00;
+    text-shadow: 0 0 10px #00FF00;
+}
+
+/* El Canvas es el único elemento que debe estar centrado en el espacio restante */
+#gameCanvas {
+    /* Lo esencial es evitar un estilo fijo que impida que el resizeGame funcione */
+    display: block;
+    margin-top: 60px; /* Margen para que el canvas no se superponga con el header */
+    border: 2px solid #ff1a1a;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+/* --- Mensajes de Victoria / Derrota (sin cambios mayores) --- */
+.hidden {
+    display: none !important;
+}
+
+#message-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95); /* Opacidad aumentada para full screen */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+#message-box {
+    background: #1a0000;
+    border: 3px solid #ff1a1a;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 0 50px #ff0000;
+    animation: flicker 1.5s infinite alternate;
+}
+
+#message-title {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+#message-text {
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 30px;
+}
+
+#retry-button {
+    background: linear-gradient(135deg, #b44400 0%, #e77018 50%, #b44400 100%);
+    color: white;
+    border: 2px solid #ff1a1a;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+}
+
+#retry-button:hover {
+    background: linear-gradient(135deg, #e77018 0%, #ff8c3a 50%, #e77018 100%);
+    box-shadow: 0 0 25px #ff4500;
+    transform: scale(1.05);
+}
+
+@keyframes flicker {
+    0% { opacity: 0.98; }
+    50% { opacity: 1; }
+    100% { opacity: 0.98; }
+}
