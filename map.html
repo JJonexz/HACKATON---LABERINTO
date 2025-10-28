@@ -4,20 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Top-Down Game - Mapa</title>
-    <link rel="stylesheet" href="css/player.css">
+    <link rel="stylesheet" href="css/player.css"> 
 </head>
 <body>
-    <!-- Canvas donde se dibuja todo el juego -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Indicador de controles -->
     <div class="controls-info">
         <h3>🎮 Controles</h3>
         <p><strong>W A S D</strong> - Mover personaje</p>
-        <p><strong>ESC</strong> - Volver al menú</p>
-    </div>
+        <p><strong>ESC</strong> - Pausar / Reanudar</p> </div>
 
-    <!-- Cargamos la lógica del jugador -->
+    <div id="pauseOverlay" class="pause-overlay hidden"></div>
+
+    <div id="pauseMenu" class="pause-menu hidden">
+        <h1>PAUSA</h1>
+        <div class="pause-buttons">
+            <button id="resumeButton" class="pause-button">REANUDAR</button>
+            <a href="index.html" class="pause-button menu-button">VOLVER AL MENÚ</a>
+        </div>
+    </div>
     <script src="js/player.js"></script>
 </body>
 </html>
