@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nivel 1: El Laberinto Full Screen</title>
+    <link rel="stylesheet" href="css/juego.css">
+    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="game-container">
+        
+        <!-- Contenedor fijo que se superpone al canvas -->
+        <div class="header-overlay">
+            <h1>NIVEL 1: LABERINTO LAS TONINAS</h1>
+            
+            <div id="timer-container">
+                Tiempo restante: <span id="timer">60</span>s
+            </div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="message-overlay" class="hidden">
+            <div id="message-box">
+                <h2 id="message-title"></h2>
+                <p id="message-text"></p>
+                <button id="retry-button">Volver al Menú</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/juego.js"></script>
+</body>
+</html>
