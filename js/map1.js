@@ -42,8 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let playerStartCol = 0;
     
     // Cooldown de teletransportes
-    const teleportCooldown = 2000;
+    const teleportCooldown = 5000; // 5 segundos
     const cooldowns = {};
+    let activeCooldown = false;
+    const cooldownDisplay = document.getElementById('teleport-cooldown');
+    const cooldownTimer = document.getElementById('cooldown-timer');
 
     // ========== MAPA OPTIMIZADO 35x50 CON CARRILES AMPLIOS ==========
     const mazeMap = [
@@ -348,30 +351,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const cellType = mazeMap[pos.row][pos.col];
         const cooldownKey = `${pos.row},${pos.col}`;
 
-        if (!teleportGroups[cellType]) return;
+        // Si no es un tipo de teletransportador válido, salimos
+        if (!teleportGroups[cellType]) {
+            if (cooldownDisplay.style.display === 'block') {
+                const currentTime = Date.now();
+                const remainingCooldown = Math.ceil((cooldowns[Object.keys(cooldowns)[0]] - currentTime) / 1000);
+                if (remainingCooldown <= 0) {
+                    cooldownDisplay.style.display = 'none';
+                    activeCooldown = false;
+                } else {
+                    cooldownTimer.textContent = remainingCooldown;
+                }
+            }
+            return;
+        }
 
         const currentTime = Date.now();
         
+        // Verificamos el cooldown solo del teleportador actual
         if (cooldowns[cooldownKey] && cooldowns[cooldownKey] > currentTime) {
+            const remainingCooldown = Math.ceil((cooldowns[cooldownKey] - currentTime) / 1000);
+            cooldownTimer.textContent = remainingCooldown;
+            cooldownDisplay.style.display = 'block';
             return;
         }
 
         const group = teleportGroups[cellType];
         if (group.length < 2) return;
 
+        // Encontramos el teleportador actual
         const currentTeleport = group.find(tp => tp.row === pos.row && tp.col === pos.col);
         
         if (currentTeleport) {
+            // Filtramos los posibles destinos (excluyendo el actual)
             const possibleTargets = group.filter(tp => tp.row !== pos.row || tp.col !== pos.col);
 
             if (possibleTargets.length > 0) {
+                // Seleccionamos un destino aleatorio
                 const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-                const targetCooldownKey = `${targetTeleport.row},${targetTeleport.col}`;
-
+                
+                // Aplicamos cooldown solo al teleportador de origen
                 cooldowns[cooldownKey] = currentTime + teleportCooldown;
-                cooldowns[targetCooldownKey] = currentTime + teleportCooldown;
+                activeCooldown = true;
+                cooldownDisplay.style.display = 'block';
+                cooldownTimer.textContent = Math.ceil(teleportCooldown / 1000);
 
-                player.setGridPosition(targetTeleport.row, targetTeleport.col);
+                // Teleportamos al jugador centrado en la celda de destino
+                const centerX = (targetTeleport.col + 0.5) * GRID_SIZE;
+                const centerY = (targetTeleport.row + 0.5) * GRID_SIZE;
+                player.x = centerX;
+                player.y = centerY;
                 player.dx = 0;
                 player.dy = 0;
             }
