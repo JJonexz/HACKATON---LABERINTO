@@ -75,6 +75,45 @@ body {
     opacity: 0.7;
 }
 
+/* Indicador de coleccionable */
+#collectible-indicator {
+    font-size: 1.3rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.collectible-uncollected {
+    opacity: 0.3;
+    filter: grayscale(1);
+}
+
+.collectible-collected {
+    opacity: 1;
+    filter: grayscale(0);
+    animation: collectPulse 1s ease;
+}
+
+#collectible-check {
+    font-size: 1.5rem;
+}
+
+.collectible-uncollected #collectible-check {
+    color: #ff4444;
+}
+
+.collectible-collected #collectible-check {
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+@keyframes collectPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
 /* Canvas del juego */
 #gameCanvas {
     display: block;

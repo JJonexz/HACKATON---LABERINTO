@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const cooldownDisplay = document.getElementById('teleport-cooldown');
     const cooldownTimer = document.getElementById('cooldown-timer');
 
+    // Coleccionable de rueda
+    const collectibleIndicator = document.getElementById('collectible-indicator');
+    const collectibleCheck = document.getElementById('collectible-check');
+    let collectibleCollected = false;
+    const collectiblePosition = { row: 17, col: 8 }; // Posición oculta en el mapa (pasillo estrecho)
+    let collectiblePulse = 0;
+
     // ========== MAPA NIVEL 2: TÚNELES ESTRECHOS (40x55) ==========
     const mazeMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
@@ -62,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "W   WWWWWWWWW   W   WWWWW   W   WWWWWWWWW   WWWWWWWWW",
         "W           W   W       W   W               W       W",
         "WWWWWWWWW   W   WWWWW   W   WWWWWWWWWWWWW   W   W   W",
-        "W       W   W       W   W               W   W   W   W",
+        "W       R   W       W   W               W   W   W   W",
         "W   W   W   WWWWW   W   WWWWWWWWWWWWW   W   W   W   W",
         "W   W   W       W   W           W   L   W   W   W   W",
         "W   W   WWWWW   W   WWWWWWWW    W   WWWWW   W   W   W",
@@ -97,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'X': [
             { row: 13, col: 20 },
-            { row: 35, col: 52 }
+            { row: 35, col: 50 }
         ],
         'Y': [
             { row: 29, col: 28 },
@@ -292,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.fillText(icon, x + GRID_SIZE / 2, y + GRID_SIZE / 2);
                         break;
                         
+                    case 'R':
                     case 'P':
                     case ' ':
                         ctx.fillStyle = '#000000'; 
@@ -340,6 +348,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const pos = player.getGridPosition();
         if (mazeMap[pos.row][pos.col] === 'E') {
             winGame();
+        }
+    }
+    
+    function drawCollectible() {
+        if (collectibleCollected) return;
+        
+        const x = collectiblePosition.col * GRID_SIZE;
+        const y = collectiblePosition.row * GRID_SIZE;
+        
+        collectiblePulse += 0.05;
+        const pulse = Math.sin(collectiblePulse) * 0.3 + 0.7;
+        const glow = Math.sin(collectiblePulse * 2) * 10 + 15;
+        
+        // Fondo brillante
+        ctx.fillStyle = `rgba(255, 215, 0, ${pulse * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(x + GRID_SIZE / 2, y + GRID_SIZE / 2, GRID_SIZE / 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Efecto de brillo
+        ctx.shadowBlur = glow;
+        ctx.shadowColor = '#FFD700';
+        
+        // Dibujar rueda (emoji)
+        ctx.font = `${GRID_SIZE * 0.7}px Arial`;
+        ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎡', x + GRID_SIZE / 2, y + GRID_SIZE / 2);
+        
+        ctx.shadowBlur = 0;
+    }
+    
+    function checkCollectible() {
+        if (collectibleCollected) return;
+        
+        const pos = player.getGridPosition();
+        if (pos.row === collectiblePosition.row && pos.col === collectiblePosition.col) {
+            collectibleCollected = true;
+            collectibleIndicator.classList.remove('collectible-uncollected');
+            collectibleIndicator.classList.add('collectible-collected');
+            collectibleCheck.textContent = '✓';
+            
+            // Guardar en localStorage
+            localStorage.setItem('map2_collectible', 'true');
         }
     }
     
@@ -529,12 +582,14 @@ document.addEventListener('DOMContentLoaded', () => {
         player.update(keys, canMoveTo, deltaTime);
         
         checkWinCondition();
+        checkCollectible();
         checkTeleport();
 
         clearCanvas();
     // Aplicar cámara centrada en el jugador y con zoom
     player.applyCamera(ctx, canvas.width, canvas.height);
     drawMaze();
+    drawCollectible();
     player.draw(ctx);
     drawLighting();
     player.restoreCamera(ctx);
@@ -548,6 +603,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         player = new Player(0, 0, GRID_SIZE);
         player.setGridPosition(playerStartRow, playerStartCol);
+        
+        // Verificar si el coleccionable ya fue recogido
+        if (localStorage.getItem('map2_collectible') === 'true') {
+            collectibleCollected = true;
+            collectibleIndicator.classList.remove('collectible-uncollected');
+            collectibleIndicator.classList.add('collectible-collected');
+            collectibleCheck.textContent = '✓';
+        }
         
         window.addEventListener('resize', resizeGame);
         
