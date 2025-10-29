@@ -10,17 +10,28 @@
 <body>
     <div class="game-container">
         
-        <!-- Contenedor fijo que se superpone al canvas -->
+        <!-- Header fijo -->
         <div class="header-overlay">
             <h1>NIVEL 1: LABERINTO LAS TONINAS</h1>
-            
             <div id="timer-container">
                 Tiempo restante: <span id="timer">60</span>s
             </div>
         </div>
 
+        <!-- Canvas del juego -->
         <canvas id="gameCanvas"></canvas>
 
+        <!-- ========== MENÚ DE PAUSA ========== -->
+        <div id="pause-overlay" class="hidden"></div>
+        <div id="pause-menu" class="hidden">
+            <h1>PAUSA</h1>
+            <div class="pause-buttons">
+                <button id="resume-button" class="pause-button">REANUDAR</button>
+                <button id="menu-button" class="pause-button">VOLVER AL MENÚ</button>
+            </div>
+        </div>
+
+        <!-- Mensaje de victoria/derrota -->
         <div id="message-overlay" class="hidden">
             <div id="message-box">
                 <h2 id="message-title"></h2>
@@ -30,6 +41,8 @@
         </div>
     </div>
 
+    <!-- ⚠️ IMPORTANTE: Cargar player.js ANTES de juego.js -->
+    <script src="js/player.js"></script>
     <script src="js/juego.js"></script>
 </body>
 </html>

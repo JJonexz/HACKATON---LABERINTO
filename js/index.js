@@ -25,7 +25,7 @@ for(let i = 0; i < 20; i++) {
         
         setTimeout(() => {
             // Aquí redirige a tu página de juego
-            window.location.href = 'map.html';
+            window.location.href = 'map1.html';
         }, 500);
     }
 

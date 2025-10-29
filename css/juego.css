@@ -135,3 +135,88 @@ body {
     50% { opacity: 1; }
     100% { opacity: 0.98; }
 }
+
+/* Clase para ocultar elementos */
+.hidden {
+    display: none !important;
+}
+
+/* Efecto de desenfoque cuando está pausado */
+#gameCanvas.paused {
+    filter: blur(5px);
+    transition: filter 0.3s ease-in-out;
+}
+
+/* Overlay oscuro de pausa */
+#pause-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 90;
+}
+
+/* Menú de pausa */
+#pause-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    
+    font-family: 'Courier New', monospace;
+    color: #ff1a1a;
+    padding: 40px 60px;
+    border: 3px solid #ad0000;
+    border-radius: 10px;
+    background: rgba(25, 0, 0, 0.98);
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+    min-width: 300px;
+}
+
+#pause-menu h1 {
+    font-size: 3rem;
+    margin: 0 0 30px 0;
+    text-shadow: 0 0 15px #ff0000;
+}
+
+.pause-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.pause-button {
+    background: linear-gradient(135deg, #b44400 0%, #e77018 100%);
+    color: #fff;
+    padding: 15px 30px;
+    border: 2px solid #ad0000;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(180, 68, 0, 0.4);
+}
+
+.pause-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(180, 68, 0, 0.8);
+}
+
+#menu-button {
+    background: linear-gradient(135deg, #4a0101 0%, #6b0101 100%);
+    border-color: #ad0000;
+}
+
+#menu-button:hover {
+    background: linear-gradient(135deg, #6b0101 0%, #8b0101 100%);
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+}
