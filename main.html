@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selección de Nivel - El Último Turista</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="game-container">
+        
+        <!-- Header fijo -->
+        <div class="header-overlay">
+            <h1>ELIGE TU DESTINO</h1>
+            <div id="stats-container">
+                <div id="progress-info">
+                    NIVELES COMPLETADOS: <span id="levels-completed">0</span>/3
+                    <button id="reset-progress" style="margin-left: 20px; background: #4a0101; color: #ff6666; border: 1px solid #ff0000; padding: 5px 10px; cursor: pointer; font-family: inherit; border-radius: 4px;">Reiniciar Progreso</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas del selector -->
+        <canvas id="selectorCanvas"></canvas>
+
+        <!-- Instrucciones -->
+        <div id="instructions-overlay">
+            <div class="instruction-box">
+                <h2>INSTRUCCIONES</h2>
+                <p>Muévete con <strong>WASD</strong> o <strong>Flechas</strong></p>
+                <p>Acércate a una puerta para entrar al nivel</p>
+                <p>Completa cada nivel para desbloquear el siguiente</p>
+                <p class="warning">¡Las puertas brillan en verde cuando completas el nivel!</p>
+                <button id="start-button" class="main-button">COMENZAR</button>
+            </div>
+        </div>
+
+        <!-- Indicador de carga -->
+        <div id="loading-overlay" class="hidden">
+            <div class="loading-spinner"></div>
+            <p>Cargando nivel...</p>
+        </div>
+    </div>
+
+    <!-- Cargar player.js ANTES de main.js -->
+    <script src="js/player.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

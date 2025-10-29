@@ -1,4 +1,4 @@
-/* Estilo general del cuerpo, similar a tu index.css */
+/* Estilo general del cuerpo */
 body {
     font-family: 'Courier New', monospace;
     background: radial-gradient(circle at center, #190000 0%, #090000 50%, #000000 100%);
@@ -9,13 +9,12 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    overflow: hidden; /* Evita barras de desplazamiento */
+    overflow: hidden;
     text-shadow:
         0 0 10px #ff0000,
         0 0 25px #ff0000;
 }
 
-/* Modificado para que ocupe toda la pantalla y centre el canvas */
 .game-container {
     position: relative;
     text-align: center;
@@ -23,127 +22,79 @@ body {
     box-shadow: none;
     border: none;
     background: transparent;
-    width: 100vw; /* 100% del ancho del viewport */
-    height: 100vh; /* 100% del alto del viewport */
+    width: 100vw;
+    height: 100vh;
     display: flex;
-    /* Cambiado de align-items: center; para que el canvas se posicione debajo del header */
-    justify-content: center; 
-    align-items: flex-start; /* Alinea el contenido (el canvas) al inicio */
+    justify-content: center;
+    align-items: flex-start;
 }
 
-/* Nueva capa para el encabezado y el temporizador (fijos) */
+/* Header mejorado */
 .header-overlay {
-    /* Aseguramos que el encabezado esté arriba y se extienda por todo el ancho */
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 50; /* Por encima del canvas */
-    background: rgba(0, 0, 0, 0.8); /* Fondo semitransparente */
-    padding: 10px 0;
-    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.5);
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px 20px;
+    box-shadow: 0 5px 20px rgba(255, 0, 0, 0.5);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
     box-sizing: border-box;
+    backdrop-filter: blur(10px);
 }
 
 .header-overlay h1 {
     font-size: 1.5rem;
     margin: 0;
+    letter-spacing: 3px;
+}
+
+#stats-container {
+    display: flex;
+    gap: 30px;
+    align-items: center;
 }
 
 #timer-container {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: bold;
 }
 
 #timer {
     color: #00FF00;
     text-shadow: 0 0 10px #00FF00;
-}
-
-/* El Canvas es el único elemento que debe estar centrado en el espacio restante */
-#gameCanvas {
-    /* Lo esencial es evitar un estilo fijo que impida que el resizeGame funcione */
-    display: block;
-    margin-top: 60px; /* Margen para que el canvas no se superponga con el header */
-    border: 2px solid #ff1a1a;
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
-}
-
-/* --- Mensajes de Victoria / Derrota (sin cambios mayores) --- */
-.hidden {
-    display: none !important;
-}
-
-#message-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.95); /* Opacidad aumentada para full screen */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-}
-
-#message-box {
-    background: #1a0000;
-    border: 3px solid #ff1a1a;
-    border-radius: 10px;
-    padding: 40px;
-    text-align: center;
-    box-shadow: 0 0 50px #ff0000;
-    animation: flicker 1.5s infinite alternate;
-}
-
-#message-title {
-    font-size: 3rem;
-    margin-bottom: 20px;
-}
-
-#message-text {
     font-size: 1.5rem;
-    color: #fff;
-    margin-bottom: 30px;
 }
 
-#retry-button {
-    background: linear-gradient(135deg, #b44400 0%, #e77018 50%, #b44400 100%);
-    color: white;
-    border: 2px solid #ff1a1a;
-    border-radius: 5px;
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+#fps-container {
+    font-size: 0.9rem;
+    color: #ffaa00;
+    opacity: 0.7;
 }
 
-#retry-button:hover {
-    background: linear-gradient(135deg, #e77018 0%, #ff8c3a 50%, #e77018 100%);
-    box-shadow: 0 0 25px #ff4500;
-    transform: scale(1.05);
+/* Canvas del juego */
+#gameCanvas {
+    display: block;
+    margin-top: 70px;
+    border: 3px solid #ff1a1a;
+    box-shadow: 
+        0 0 30px rgba(255, 0, 0, 0.5),
+        0 0 60px rgba(255, 0, 0, 0.3),
+        inset 0 0 20px rgba(0, 0, 0, 0.5);
+    background: #000000;
 }
 
-@keyframes flicker {
-    0% { opacity: 0.98; }
-    50% { opacity: 1; }
-    100% { opacity: 0.98; }
-}
-
-/* Clase para ocultar elementos */
+/* Clase ocultar */
 .hidden {
     display: none !important;
 }
 
 /* Efecto de desenfoque cuando está pausado */
 #gameCanvas.paused {
-    filter: blur(5px);
+    filter: blur(8px) brightness(0.5);
     transition: filter 0.3s ease-in-out;
 }
 
@@ -154,11 +105,17 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     z-index: 90;
+    animation: fadeIn 0.3s ease;
 }
 
-/* Menú de pausa */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Menú de pausa mejorado */
 #pause-menu {
     position: fixed;
     top: 50%;
@@ -170,17 +127,44 @@ body {
     color: #ff1a1a;
     padding: 40px 60px;
     border: 3px solid #ad0000;
-    border-radius: 10px;
+    border-radius: 15px;
     background: rgba(25, 0, 0, 0.98);
     text-align: center;
-    box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
-    min-width: 300px;
+    box-shadow: 
+        0 0 40px rgba(255, 0, 0, 0.8),
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+    min-width: 350px;
+    animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
 }
 
 #pause-menu h1 {
     font-size: 3rem;
-    margin: 0 0 30px 0;
-    text-shadow: 0 0 15px #ff0000;
+    margin: 0 0 10px 0;
+    text-shadow: 0 0 20px #ff0000;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.pause-info {
+    font-size: 1rem;
+    color: #ff6b35;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
 }
 
 .pause-buttons {
@@ -188,6 +172,7 @@ body {
     flex-direction: column;
     gap: 15px;
     margin-top: 20px;
+    margin-bottom: 30px;
 }
 
 .pause-button {
@@ -195,7 +180,7 @@ body {
     color: #fff;
     padding: 15px 30px;
     border: 2px solid #ad0000;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     text-decoration: none;
     font-family: 'Courier New', monospace;
@@ -203,20 +188,173 @@ body {
     font-weight: bold;
     text-align: center;
     transition: all 0.3s ease;
-    box-shadow: 0 0 10px rgba(180, 68, 0, 0.4);
+    box-shadow: 0 0 15px rgba(180, 68, 0, 0.5);
 }
 
 .pause-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 25px rgba(180, 68, 0, 0.8);
+    box-shadow: 0 0 30px rgba(180, 68, 0, 0.9);
 }
 
-#menu-button {
+.menu-btn {
     background: linear-gradient(135deg, #4a0101 0%, #6b0101 100%);
     border-color: #ad0000;
 }
 
-#menu-button:hover {
+.menu-btn:hover {
     background: linear-gradient(135deg, #6b0101 0%, #8b0101 100%);
-    box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+}
+
+.controls-info {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #ad0000;
+}
+
+.controls-info h3 {
+    margin-bottom: 15px;
+    color: #ff6b35;
+    font-size: 1.1rem;
+}
+
+.controls-info p {
+    margin: 8px 0;
+    font-size: 0.9rem;
+    color: #ffaa00;
+}
+
+/* Mensajes de victoria/derrota */
+#message-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    animation: fadeIn 0.5s ease;
+}
+
+#message-box {
+    background: #1a0000;
+    border: 3px solid #ff1a1a;
+    border-radius: 15px;
+    padding: 50px;
+    text-align: center;
+    box-shadow: 
+        0 0 60px #ff0000,
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+    animation: flicker 1.5s infinite alternate;
+    max-width: 500px;
+}
+
+#message-title {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px currentColor;
+}
+
+#message-text {
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+#message-stats {
+    font-size: 1.2rem;
+    color: #ffaa00;
+    margin-bottom: 30px;
+    font-style: italic;
+}
+
+#retry-button {
+    background: linear-gradient(135deg, #b44400 0%, #e77018 50%, #b44400 100%);
+    color: white;
+    border: 2px solid #ff1a1a;
+    border-radius: 8px;
+    padding: 15px 40px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+#retry-button:hover {
+    background: linear-gradient(135deg, #e77018 0%, #ff8c3a 50%, #e77018 100%);
+    box-shadow: 0 0 35px #ff4500;
+    transform: scale(1.08);
+}
+
+@keyframes flicker {
+    0% { opacity: 0.98; }
+    50% { opacity: 1; }
+    100% { opacity: 0.98; }
+}
+
+/* Pantalla de carga */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    color: #ff1a1a;
+}
+
+#loading-overlay p {
+    margin-top: 20px;
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(255, 26, 26, 0.2);
+    border-top: 5px solid #ff1a1a;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-overlay h1 {
+        font-size: 1rem;
+    }
+    
+    #stats-container {
+        gap: 15px;
+    }
+    
+    #timer-container {
+        font-size: 1rem;
+    }
+    
+    #pause-menu {
+        padding: 30px 40px;
+        min-width: 280px;
+    }
+    
+    #pause-menu h1 {
+        font-size: 2rem;
+    }
 }

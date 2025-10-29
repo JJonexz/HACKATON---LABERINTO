@@ -1,88 +1,122 @@
 class Player {
     constructor(x, y, gridSize) {
         // ========== POSICIÓN ==========
-        this.x = x;                    // Posición X en el canvas
-        this.y = y;                    // Posición Y en el canvas
+        this.x = x;
+        this.y = y;
         
         // ========== GRID ==========
-        this.gridSize = gridSize;      // Tamaño de celda (para cálculos)
+        this.gridSize = gridSize;
         
         // ========== MOVIMIENTO ==========
-        this.speed = gridSize / 5;     // Velocidad proporcional al grid
-        this.dx = 0;                   // Delta X (movimiento horizontal)
-        this.dy = 0;                   // Delta Y (movimiento vertical)
-        this.isMoving = false;         // ¿Se está moviendo?
+        this.speed = gridSize / 4;
+        this.dx = 0;
+        this.dy = 0;
+        this.isMoving = false;
         
         // ========== DIRECCIÓN ==========
-        this.direction = 'down';       // Dirección actual (up, down, left, right)
+        this.direction = 'down';
         
         // ========== DIMENSIONES ==========
-        this.radius = gridSize / 3;    // Radio del círculo del jugador
+        this.radius = gridSize / 3;
+        this.width = gridSize;
+        this.height = gridSize;
         
         // ========== VISIBILIDAD ==========
-        this.visibilityRadius = gridSize * 3.5; // Radio de visión
+        // Radio de luz fijo y simple
+        this.lightRadius = gridSize * 5;
         
         // ========== COLORES ==========
-        this.color = '#FFFF00';        // Amarillo
-        this.auraColor = 'rgba(255, 255, 0, 0.15)';
+        this.color = '#FFFF00';
+        
+        // ========== ANIMACIÓN Y SPRITES ==========
+        this.spriteImages = {
+            down: [new Image(), new Image(), new Image()],
+            up: [new Image(), new Image(), new Image()],
+            // ahora left/right también reservan el índice 0 para la pose estática (idle)
+            left: [new Image(), new Image(), new Image()],
+            right: [new Image(), new Image(), new Image()]
+        };
+        this.loadSprites();
+        
+        this.animationFrame = 0;
+        this.animationTimer = 0;
+        this.animationSpeed = 120;
+    }
+    
+    // ========== CARGAR SPRITES ==========
+    loadSprites() {
+        const basePath = 'sprites/player/';
+        
+        this.spriteImages.down[0].src = basePath + 'aba.png';
+        this.spriteImages.down[1].src = basePath + 'aba1.png';
+        this.spriteImages.down[2].src = basePath + 'aba2.png';
+
+        this.spriteImages.up[0].src = basePath + 'arr.png';
+        this.spriteImages.up[1].src = basePath + 'arr1.png';
+        this.spriteImages.up[2].src = basePath + 'arr2.png';
+
+    // static (idle) + walking frames for left
+    this.spriteImages.left[0].src = basePath + 'izq.png';
+    this.spriteImages.left[1].src = basePath + 'izq1.png';
+    this.spriteImages.left[2].src = basePath + 'izq2.png';
+
+    // static (idle) + walking frames for right
+    this.spriteImages.right[0].src = basePath + 'der.png';
+    this.spriteImages.right[1].src = basePath + 'der1.png';
+    this.spriteImages.right[2].src = basePath + 'der2.png';
     }
 
     // ==================== ACTUALIZAR GRID SIZE ====================
     updateGridSize(newGridSize) {
-        // Guardar la posición relativa en celdas
         const gridX = this.x / this.gridSize;
         const gridY = this.y / this.gridSize;
         
-        // Actualizar el gridSize
         this.gridSize = newGridSize;
         
-        // Recalcular posición y parámetros
         this.x = gridX * newGridSize;
         this.y = gridY * newGridSize;
-        this.speed = newGridSize / 5;
+        this.speed = newGridSize / 4;
         this.radius = newGridSize / 3;
-        this.visibilityRadius = newGridSize * 3.5;
+        this.lightRadius = newGridSize * 5;
+        
+        this.width = newGridSize;
+        this.height = newGridSize;
     }
 
-    // ==================== ACTUALIZAR POSICIÓN ====================
-    update(keys, canMoveTo) {
-        // Resetear estado de movimiento
+    // ==================== ACTUALIZAR POSICIÓN Y ANIMACIÓN ====================
+    update(keys, canMoveTo, deltaTime) {
         this.isMoving = false;
         
-        // Variables para acumular movimiento
         let dx = 0;
         let dy = 0;
 
-        // ========== DETECTAR TECLAS PRESIONADAS ==========
+        // Detectar teclas presionadas (no marcamos isMoving aquí;
+        // lo determinaremos después de comprobar colisiones)
         if (keys['w'] || keys['W'] || keys['ArrowUp']) {
             dy -= this.speed;
             this.direction = 'up';
-            this.isMoving = true;
         }
         if (keys['s'] || keys['S'] || keys['ArrowDown']) {
             dy += this.speed;
             this.direction = 'down';
-            this.isMoving = true;
         }
         if (keys['a'] || keys['A'] || keys['ArrowLeft']) {
             dx -= this.speed;
             this.direction = 'left';
-            this.isMoving = true;
         }
         if (keys['d'] || keys['D'] || keys['ArrowRight']) {
             dx += this.speed;
             this.direction = 'right';
-            this.isMoving = true;
         }
 
-        // ========== NORMALIZAR MOVIMIENTO DIAGONAL ==========
+        // Normalizar movimiento diagonal
         if (dx !== 0 && dy !== 0) {
             const factor = Math.sqrt(2) / 2;
             dx *= factor;
             dy *= factor;
         }
 
-        // ========== APLICAR MOVIMIENTO CON COLISIONES ==========
+        // Aplicar movimiento con colisiones
         let newX = this.x + dx;
         if (canMoveTo(newX, this.y, this.radius)) {
             this.x = newX;
@@ -97,34 +131,75 @@ class Player {
             dy = 0;
         }
         
-        // Guardar deltas para uso externo si es necesario
         this.dx = dx;
         this.dy = dy;
-    }
 
-    // ==================== DIBUJAR AURA ====================
-    drawAura(ctx) {
-        const gradient = ctx.createRadialGradient(
-            this.x, this.y, this.radius, 
-            this.x, this.y, this.visibilityRadius
-        );
-        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.15)');
-        gradient.addColorStop(0.5, 'rgba(255, 255, 0, 0.05)');
-        gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.visibilityRadius, 0, Math.PI * 2);
-        ctx.fill();
+        // Si ambas componentes quedaron a 0 (movimiento bloqueado), no se considera
+        // que el jugador esté "moving" y por tanto no avanza la animación de caminar.
+        this.isMoving = (dx !== 0 || dy !== 0);
+
+        // Actualizar animación
+        if (this.isMoving) {
+            this.animationTimer += deltaTime;
+            if (this.animationTimer > this.animationSpeed) {
+                this.animationFrame++;
+                this.animationTimer = 0;
+            }
+        } else {
+            this.animationFrame = 0;
+            this.animationTimer = 0;
+        }
     }
 
     // ==================== DIBUJAR PERSONAJE ====================
     draw(ctx) {
-        // Dibujar jugador (círculo amarillo)
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
+        let currentSpriteSet;
+        
+        switch (this.direction) {
+            case 'up':
+                currentSpriteSet = this.spriteImages.up;
+                break;
+            case 'down':
+                currentSpriteSet = this.spriteImages.down;
+                break;
+            case 'left':
+                currentSpriteSet = this.spriteImages.left;
+                break;
+            case 'right':
+                currentSpriteSet = this.spriteImages.right;
+                break;
+            default:
+                currentSpriteSet = this.spriteImages.down;
+        }
+
+        let frame;
+
+        if (this.isMoving) {
+            // Usar todos los frames excepto el 0 para la animación de caminar
+            const walkFrames = currentSpriteSet.slice(1);
+
+            if (this.animationFrame >= walkFrames.length) {
+                this.animationFrame = 0;
+            }
+            frame = walkFrames[this.animationFrame];
+
+        } else {
+            // Pose estática: índice 0 reservado para idle en todas las direcciones
+            frame = currentSpriteSet[0];
+        }
+        
+        const drawX = this.x - this.width / 2;
+        const drawY = this.y - this.height / 2;
+
+        if (frame && frame.complete && frame.naturalHeight !== 0) {
+            ctx.drawImage(frame, drawX, drawY, this.width, this.height);
+        } else {
+            // Fallback simple
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     // ==================== OBTENER CELDA ACTUAL ====================

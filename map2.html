@@ -3,26 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top-Down Game - Mapa</title>
-    <link rel="stylesheet" href="css/player.css"> 
+    <title>Nivel 2: El Túnel</title>
+    <link rel="stylesheet" href="css/juego.css">
+    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <div class="game-container">
+        
+        <!-- Header fijo -->
+        <div class="header-overlay">
+            <h1>NIVEL 2: TÚNELES SUBTERRÁNEOS</h1>
+            <div id="stats-container">
+                <div id="timer-container">
+                    <span id="timer">90</span>s
+                </div>
+                <div id="fps-container">
+                    FPS: <span id="fps">60</span>
+                </div>
+            </div>
+        </div>
 
-    <div class="controls-info">
-        <h3>🎮 Controles</h3>
-        <p><strong>W A S D</strong> - Mover personaje</p>
-        <p><strong>ESC</strong> - Pausar / Reanudar</p> </div>
+        <!-- Canvas del juego -->
+        <canvas id="gameCanvas"></canvas>
 
-    <div id="pauseOverlay" class="pause-overlay hidden"></div>
+        <!-- Menú de pausa -->
+        <div id="pause-overlay" class="hidden"></div>
+        <div id="pause-menu" class="hidden">
+            <h1>PAUSA</h1>
+            <p class="pause-info">El tiempo se ha detenido...</p>
+            <div class="pause-buttons">
+                <button id="resume-button" class="pause-button">REANUDAR</button>
+                <button id="pause-restart-button" class="pause-button menu-btn">REINICIAR PARTIDA</button>
+                <button id="menu-button" class="pause-button menu-btn">VOLVER AL MENÚ</button>
+            </div>
+            <div class="controls-info">
+                <h3>CONTROLES:</h3>
+                <p>W / ↑ - Arriba</p>
+                <p>S / ↓ - Abajo</p>
+                <p>A / ← - Izquierda</p>
+                <p>D / → - Derecha</p>
+                <p>ESC - Pausa</p>
+            </div>
+        </div>
 
-    <div id="pauseMenu" class="pause-menu hidden">
-        <h1>PAUSA</h1>
-        <div class="pause-buttons">
-            <button id="resumeButton" class="pause-button">REANUDAR</button>
-            <a href="index.html" class="pause-button menu-button">VOLVER AL MENÚ</a>
+        <!-- Mensaje de victoria/derrota -->
+        <div id="message-overlay" class="hidden">
+            <div id="message-box">
+                <h2 id="message-title"></h2>
+                <p id="message-text"></p>
+                <p id="message-stats"></p>
+                <button id="retry-button" class="pause-button menu-btn">Volver al Menú</button>
+                <button id="lose-restart-button" class="pause-button menu-btn">REINICIAR PARTIDA</button>
+            </div>
+        </div>
+
+        <!-- Indicador de carga -->
+        <div id="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Cargando nivel...</p>
         </div>
     </div>
+
     <script src="js/player.js"></script>
+    <script src="js/map2.js"></script>
 </body>
 </html>
