@@ -535,9 +535,16 @@ document.addEventListener('DOMContentLoaded', () => {
         checkTeleport();
 
         clearCanvas();
+        // Aplicar la transformación de la cámara
+        player.applyCamera(ctx, canvas.width, canvas.height);
+        
+        // Dibujar todo el juego con la cámara aplicada
         drawMaze();
         player.draw(ctx);
         drawLighting();
+        
+        // Restaurar el contexto de la cámara
+        player.restoreCamera(ctx);
         
         animationId = requestAnimationFrame(gameLoop);
     }

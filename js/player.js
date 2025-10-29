@@ -13,6 +13,13 @@ class Player {
         this.dy = 0;
         this.isMoving = false;
         
+    // ========== CÁMARA ==========
+    this.cameraZoom = 1.5; // Nivel de zoom (ajustable)
+    this.cameraLerpFactor = 0.12; // Suavizado de la cámara (0-1, más pequeño = más suave)
+    // Posición actual de la cámara en coordenadas del mundo (se interpola hacia el jugador)
+    this.cameraX = this.x;
+    this.cameraY = this.y;
+        
         // ========== DIRECCIÓN ==========
         this.direction = 'down';
         
@@ -149,6 +156,25 @@ class Player {
             this.animationFrame = 0;
             this.animationTimer = 0;
         }
+    }
+
+    // ==================== APLICAR CÁMARA ====================
+    applyCamera(ctx, canvasWidth, canvasHeight) {
+        // Interpolar la posición de la cámara hacia la posición del jugador
+        this.cameraX += (this.x - this.cameraX) * this.cameraLerpFactor;
+        this.cameraY += (this.y - this.cameraY) * this.cameraLerpFactor;
+
+        // Aplicar transformación: centrar la cámara en (cameraX, cameraY) y aplicar zoom
+        // Orden: mover al centro del canvas, escalar, luego trasladar para que cameraX/cameraY queden en el centro.
+        ctx.save();
+        ctx.translate(canvasWidth / 2, canvasHeight / 2);
+        ctx.scale(this.cameraZoom, this.cameraZoom);
+        ctx.translate(-this.cameraX, -this.cameraY);
+    }
+
+    // ==================== RESTAURAR CÁMARA ====================
+    restoreCamera(ctx) {
+        ctx.restore();
     }
 
     // ==================== DIBUJAR PERSONAJE ====================
