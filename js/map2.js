@@ -604,13 +604,9 @@ document.addEventListener('DOMContentLoaded', () => {
         player = new Player(0, 0, GRID_SIZE);
         player.setGridPosition(playerStartRow, playerStartCol);
         
-        // Verificar si el coleccionable ya fue recogido
-        if (localStorage.getItem('map2_collectible') === 'true') {
-            collectibleCollected = true;
-            collectibleIndicator.classList.remove('collectible-uncollected');
-            collectibleIndicator.classList.add('collectible-collected');
-            collectibleCheck.textContent = '✓';
-        }
+        // NO cargar el estado del coleccionable al iniciar
+        // El coleccionable siempre aparece al comenzar el nivel
+        // Solo se guarda en localStorage cuando se recoge para el menú principal
         
         window.addEventListener('resize', resizeGame);
         
