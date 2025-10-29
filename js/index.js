@@ -16,10 +16,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Logs iniciales para diagnóstico
+    console.log('Audio element found:', bgMusic);
+    console.log('Audio src (before):', bgMusic.src, 'children:', bgMusic.children.length);
+    console.log('CanPlayType mp3:', bgMusic.canPlayType && bgMusic.canPlayType('audio/mpeg'));
+
     // Si no hay <source> ni src, asignar el fallback solicitado
     if (bgMusic.children.length === 0 && !bgMusic.src) {
         bgMusic.src = 'audio/suspenso.mp3';
     }
+
+    console.log('Audio src (after):', bgMusic.src);
+    console.log('Initial volume (from storage or default):', localStorage.getItem('musicVolume'));
 
     // Recuperar el volumen guardado o usar el valor por defecto
     const savedVolume = localStorage.getItem('musicVolume');
@@ -27,11 +35,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para reproducir la música
     const playMusic = async () => {
+        console.log('Attempting to play bgMusic - paused:', bgMusic.paused, 'currentTime:', bgMusic.currentTime, 'readyState:', bgMusic.readyState);
         try {
-            await bgMusic.play();
-            updateToggleUI();
+            const p = bgMusic.play();
+            if (p && typeof p.then === 'function') {
+                p.then(() => {
+                    console.log('bgMusic.play() resolved successfully');
+                    updateToggleUI();
+                }).catch(err => {
+                    console.error('bgMusic.play() promise rejected:', err);
+                });
+            } else {
+                // Some browsers return undefined
+                console.log('bgMusic.play() returned:', p);
+                updateToggleUI();
+            }
         } catch (error) {
-            console.log('Reproducción fallida:', error);
+            console.error('Reproducción fallida (catch):', error);
         }
     };
 
@@ -40,8 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Intentar reproducir con cualquier interacción del usuario
     const startAudioOnInteraction = () => {
+        console.log('User interaction detected to start audio. paused:', bgMusic.paused);
         if (bgMusic.paused) {
             playMusic();
+        } else {
+            console.log('Audio already playing on interaction');
         }
         document.removeEventListener('click', startAudioOnInteraction);
         document.removeEventListener('touchstart', startAudioOnInteraction);
@@ -55,6 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Controles visibles
     const musicToggle = document.getElementById('music-toggle');
     const musicVolume = document.getElementById('music-volume');
+
+    // Eventos del audio para diagnóstico
+    bgMusic.addEventListener('play', () => console.log('event: play'));
+    bgMusic.addEventListener('pause', () => console.log('event: pause'));
+    bgMusic.addEventListener('error', (e) => console.error('event: error', e, bgMusic.error));
+    bgMusic.addEventListener('canplay', () => console.log('event: canplay, readyState=', bgMusic.readyState));
+    bgMusic.addEventListener('canplaythrough', () => console.log('event: canplaythrough, readyState=', bgMusic.readyState));
+    bgMusic.addEventListener('loadedmetadata', () => console.log('event: loadedmetadata, duration=', bgMusic.duration));
+    bgMusic.addEventListener('stalled', () => console.warn('event: stalled'));
 
     // Estado inicial de volumen desde localStorage
     if (musicVolume) {
@@ -134,13 +166,19 @@ function startGame() {
 }
 
 // Efecto de sonido hover en el botón
-const playButton = document.querySelector('.play-button');
-playButton.addEventListener('mouseenter', () => {
-    playButton.style.filter = 'brightness(1.2)';
-});
+document.addEventListener('DOMContentLoaded', () => {
+    const playButton = document.querySelector('.play-button');
+    if (playButton) {
+        playButton.addEventListener('mouseenter', () => {
+            playButton.style.filter = 'brightness(1.2)';
+        });
 
-playButton.addEventListener('mouseleave', () => {
-    playButton.style.filter = 'brightness(1)';
+        playButton.addEventListener('mouseleave', () => {
+            playButton.style.filter = 'brightness(1)';
+        });
+    } else {
+        console.warn('play-button element not found when adding hover effects');
+    }
 });
 
 // Efecto de tecla Enter para iniciar

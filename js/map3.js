@@ -43,75 +43,85 @@ document.addEventListener('DOMContentLoaded', () => {
     const cooldownDisplay = document.getElementById('teleport-cooldown');
     const cooldownTimer = document.getElementById('cooldown-timer');
 
-    // ========== MAPA NIVEL 3: CRIPTA CIRCULAR (45x60) ==========
-    const mazeMap = [
+    // ========== MAPA NIVEL 3: VILLA-LABERINTO (45x60) ==========
+    // Editable static map: to edit the map manually, fill the `editableMap` array
+    // with 45 strings of exactly 60 characters each (use 'W' for walls, ' ' for floor,
+    // 'P' for player start and 'E' for exit, 'A'/'B'/'C' for teleporters).
+    // If `editableMap` is left empty or invalid, the deterministic builder below will be used.
+    // editableMap may be filled manually by the designer. If left empty or invalid,
+    // we'll generate the deterministic villa and populate editableMap with it so
+    // you can see and edit the final 45x60 content directly (same behavior as map2).
+    // Mapa generado automáticamente (villa) como 45 líneas de 60 caracteres:
+    let editableMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-        "W                                                          W",
-        "W   WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   W",
-        "W   W                                                W   W",
-        "W   W   WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   W   W",
-        "W   W   W                                      W   W   W",
-        "W   W   W   WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   W   W   W",
-        "W   W   W   W                          W   W   W   W",
-        "W   W   W   W   WWWWWWWWWWWWWWWWWW   W   W   W   W",
-        "W   W   W   W   W              W   W   W   W   W",
-        "W   W   W   W   W   WWWWWWWW   W   W   W   W   W",
-        "W   W   W   W   W   W  A   W   W   W   W   W   W",
-        "W   W   W   W   W   W      W   W   W   W   W   W",
-        "W   W   W   W   W   WWWWWWWW   W   W   W   W   W",
-        "W   W   W   W   W              W   W   W   W   W",
-        "W   W   W   W   WWWWWWWWWWWWWWWW   W   W   W   W",
-        "W   W   W   W                      W   W   W   W",
-        "W   W   W   WWWWWWWWWWWWWWWWWWWWWWWW   W   W   W",
-        "W   W   W                              W   W   W",
-        "W   W   W   WWWWWWWWWWWW   WWWWWWWWWW  W   W   W",
-        "W   W   W   W          W   W        W  W   W   W",
-        "W   W   W   W   WWWW   W   W   B    W  W   W   W",
-        "W   W   W   W   W      W   W        W  W   W   W",
-        "W   W   W   W   W  P   W   WWWWWWWWWW  W   W   W",
-        "W   W   W   W   WWWWWWWW               W   W   W",
-        "W   W   W   W                          W   W   W",
-        "W   W   W   WWWWWWWWWWWWWWWWWWWWWWWWWWWW   W   W",
-        "W   W   W                                  W   W",
-        "W   W   WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   W",
-        "W   W                                          W",
-        "W   W   WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW    W",
-        "W   W   W                              W    W",
-        "W   W   W   WWWWWWWWWWWWWWWWWWWWWWWW   W    W",
-        "W   W   W   W                    W   W    W",
-        "W   W   W   W   WWWWWWWWWWWWWW   W   W    W",
-        "W   W   W   W   W          W   W   W    W",
-        "W   W   W   W   W    C     W   W   W    W",
-        "W   W   W   W   W          W   W   W    W",
-        "W   W   W   W   WWWWWWWWWWWW   W   W    W",
-        "W   W   W   W                  W   W    W",
-        "W   W   W   WWWWWWWWWWWWWWWWWWWW   W    W",
-        "W   W   W                          W    W",
-        "W   W   WWWWWWWWWWWWWWWWWWWWWWWWWWWW   W    W",
-        "W   W                                  W   W",
-        "W   WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WE   W",
+        "WP                                                       W",
+        "W  WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW  W",
+        "W  W      W   W      W   W      W   W      W   W     AW  W",
+        "W  W  W   WwwwW      W   W          W      W   W W  W W  W",
+        "W  W      W   W      W          W   W      W   W      W  W",
+        "W  WW     W   W      W   W      W   W      W   W   W  W  W",
+        "W           W        W   WWWWWWWW      W        W     W  W",
+        "W  WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWW WW  W",
+        "W  W      W   W      W   W      W   W      W   W   W  W  W",
+        "W  W  W   W   W      WWWWW      W   W      W          W  W",
+        "W  W      W   W      W   W      W   W      W   W      W  W",
+        "W  W    W W   W      W   W      W   W      W   W      W  W",
+        "W           W        W        W        W        W   W W  W",
+        "W  WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW  W",
+        "W  W      W   W      W   W      W   W      W   W      W  W",
+        "W  W   WW W   W      WwwwW      WwwwW      W   W      W  W",
+        "W  W      W   W   C  W   W      W   W  W   W   W      W  W",
+        "W  W      W   W WW   W   W      W   W      W   W      W  W",
+        "W        BWWWWW      W        W        WWW      W        W",
+        "WWWWWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW  W",
+        "W  W      W   W      W   W      W   W      W   W      W  W",
+        "W  W  E   W   W  W   W   W      W   W   C  W   W      W  W",
+        "W  W      W   W      W   W      W   W      W   W      W  W",
+        "W  W   WW W   W      W   W      W   W W    W   W      W  W",
+        "W    W    WWWWW W             W        W        W        W",
+        "W  WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWWWWWWWWWWWWW  W",
+        "W  W      W   WW     W   W      W   W      W   W      W  W",
+        "W  W  W   W   W      WWWWW      W   W      W   W      W  W",
+        "W  W      W   W   WW W   W      W   W  W   W   W    W W  W",
+        "W  W    W W   W      W   W      W   W      W   W      W  W",
+        "W                        W    W        W        W        W",
+        "WWWWWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW  W",
+        "W  W          W      W   W      W   W      W   W      W  W",
+        "W  W  A   W   W      W   W      W   W      W   W      W  W",
+        "W  W      W   W      W              W W    W   W      W  W",
+        "W  W  W   W   W      W   W      W   W      W   W      W  W",
+        "W           W        W   W    W        W        W        W",
+        "W  WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW  W",
+        "W  W      W   W      W   W      W   W      W   W      W  W",
+        "W  W      W   W      W   W      W   W      W   W      W  W",
+        "W  W      W   W  W   W   W      W   W  W   W   W    B W  W",
+        "W  W      W   W      W   W      W   W      W   W      W  W",
+        "W    W               W        W              W        W  W",
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
     ];
+
+    // Puedes editar el array editableMap directamente. El juego usará este mapa.
+    const mazeMap = editableMap;
 
     const MAZE_ROWS = mazeMap.length;
     const MAZE_COLS = mazeMap[0].length;
     
-    // Teletransportadores interconectados para nivel 3
-    const teleportGroups = {
-        'A': [
-            { row: 11, col: 23 },
-            { row: 21, col: 32 },
-            { row: 36, col: 21 }
-        ],
-        'B': [
-            { row: 21, col: 32 },
-            { row: 36, col: 21 }
-        ],
-        'C': [
-            { row: 36, col: 21 },
-            { row: 11, col: 23 }
-        ]
-    };
+    // Teletransportadores: detecta automáticamente todas las posiciones de 'A', 'B', 'C' en el mapa
+    function buildTeleportGroups(map) {
+        const groups = { 'A': [], 'B': [], 'C': [] };
+        for (let r = 0; r < map.length; r++) {
+            for (let c = 0; c < map[r].length; c++) {
+                const cell = map[r][c];
+                if (groups[cell] !== undefined) {
+                    groups[cell].push({ row: r, col: c });
+                }
+            }
+        }
+        // Elimina grupos vacíos
+        Object.keys(groups).forEach(k => { if (groups[k].length < 2) delete groups[k]; });
+        return groups;
+    }
+    const teleportGroups = buildTeleportGroups(mazeMap);
 
     const keys = {};
 
@@ -553,6 +563,27 @@ document.addEventListener('DOMContentLoaded', () => {
         
         player = new Player(0, 0, GRID_SIZE);
         player.setGridPosition(playerStartRow, playerStartCol);
+        
+        // Ajustar zoom de cámara para que el mapa entero quepa en la ventana si es necesario,
+        // pero no alejarla demasiado (mínimo 1.0)
+        try {
+            const availableWidth = window.innerWidth;
+            const availableHeight = window.innerHeight - 70; // mismo cálculo que calculateSizes
+            const mapPixelWidth = canvas.width;
+            const mapPixelHeight = canvas.height;
+            if (mapPixelWidth > 0 && mapPixelHeight > 0) {
+                const fitZoom = Math.min(availableWidth / mapPixelWidth, availableHeight / mapPixelHeight);
+                const minZoom = 1.0; // no alejar más allá de 1.0
+                const desiredZoom = Math.max(minZoom, fitZoom);
+                // Solo ajustar si desiredZoom es menor al zoom actual (reducir ligeramente si hace falta)
+                if (desiredZoom > 0 && desiredZoom < player.cameraZoom) {
+                    console.log('Adjusting player cameraZoom for full-map fit (clamped):', desiredZoom);
+                    player.cameraZoom = desiredZoom;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to compute fit zoom for map3:', e);
+        }
         
         window.addEventListener('resize', resizeGame);
         
