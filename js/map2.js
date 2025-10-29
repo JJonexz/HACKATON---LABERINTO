@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'Y': [
             { row: 29, col: 28 },
-            { row: 37, col: 54 }
+            { row: 37, col: 51 }
         ],
         'L': [
             { row: 5, col: 8 },
