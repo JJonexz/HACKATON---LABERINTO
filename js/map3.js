@@ -534,9 +534,12 @@ document.addEventListener('DOMContentLoaded', () => {
         checkTeleport();
 
         clearCanvas();
-        drawMaze();
-        player.draw(ctx);
-        drawLighting();
+    // Aplicar cámara centrada en el jugador y con zoom
+    player.applyCamera(ctx, canvas.width, canvas.height);
+    drawMaze();
+    player.draw(ctx);
+    drawLighting();
+    player.restoreCamera(ctx);
         
         animationId = requestAnimationFrame(gameLoop);
     }

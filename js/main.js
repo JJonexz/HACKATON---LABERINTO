@@ -428,11 +428,14 @@ document.addEventListener('DOMContentLoaded', () => {
         checkDoorProximity();
 
         clearCanvas();
-        drawMap();
-        player.draw(ctx);
-        drawLighting();
+    // Aplicar cámara centrada en el jugador y con zoom
+    player.applyCamera(ctx, canvas.width, canvas.height);
+    drawMap();
+    player.draw(ctx);
+    drawLighting();
+    player.restoreCamera(ctx);
         
-        animationId = requestAnimationFrame(gameLoop);
+    animationId = requestAnimationFrame(gameLoop);
     }
 
     // ========== INICIO DEL JUEGO ==========
