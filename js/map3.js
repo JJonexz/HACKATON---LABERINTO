@@ -97,19 +97,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAZE_COLS = mazeMap[0].length;
     
     // Teletransportadores interconectados para nivel 3
+    // A conecta con B y C
+    // B conecta con A y C  
+    // C conecta con A y B
     const teleportGroups = {
         'A': [
-            { row: 11, col: 23 },
-            { row: 21, col: 32 },
-            { row: 36, col: 21 }
+            { row: 11, col: 23 },  // Ubicación de A
+            { row: 21, col: 32 },  // Destino posible: B
+            { row: 36, col: 21 }   // Destino posible: C
         ],
         'B': [
-            { row: 21, col: 32 },
-            { row: 36, col: 21 }
+            { row: 21, col: 32 },  // Ubicación de B
+            { row: 11, col: 23 },  // Destino posible: A
+            { row: 36, col: 21 }   // Destino posible: C
         ],
         'C': [
-            { row: 36, col: 21 },
-            { row: 11, col: 23 }
+            { row: 36, col: 21 },  // Ubicación de C
+            { row: 11, col: 23 },  // Destino posible: A
+            { row: 21, col: 32 }   // Destino posible: B
         ]
     };
 

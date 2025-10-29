@@ -74,15 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
         "W   WWWWWWWWWWWWW   W   WWWWWWWWW   W   WWWWW   W   W",
         "W               W   W           W   W       W   W   W",
         "WWWWWWWWWWWWW   W   WWWWWWWWW   W   WWWWW   W   W   W",
-        "W           W   W           Y   W       W   W   W   W",
+        "W           W   W       T   Y   W       W   W   W   W",
         "W   WWWWW   W   WWWWWWWWWWWWW   WWWWW   W   W   W   W",
         "W   W   W   W               W       W   W       W   W",
         "W   W   W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWW   W",
         "W   W   W               W       W   W               W",
         "W   W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWWWWWWWWWW",
-        "W   W   L           W       W   W                   W",
+        "W   W   L           W       W   W               X   W",
         "W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWWWWWWWWWW   W",
-        "W               W       W       W               W  EW",
+        "W               W       W       W               W  YE",
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
     ];
 
@@ -92,20 +92,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Teletransportadores para nivel 2
     const teleportGroups = {
         'T': [
-            { row: 9, col: 20 },
+            { row: 9, col: 24 },
             { row: 29, col: 24 }
         ],
         'X': [
-            { row: 13, col: 12 },
-            { row: 29, col: 24 }
+            { row: 13, col: 20 },
+            { row: 35, col: 52 }
         ],
         'Y': [
-            { row: 29, col: 24 },
-            { row: 37, col: 48 }
+            { row: 29, col: 28 },
+            { row: 37, col: 54 }
         ],
         'L': [
             { row: 5, col: 8 },
-            { row: 19, col: 32 },
+            { row: 19, col: 36 },
             { row: 35, col: 8 }
         ]
     };
