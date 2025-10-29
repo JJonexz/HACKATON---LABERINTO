@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'L': [
             { row: 3, col: 4 },
-            { row: 9, col: 49 },
+            { row: 9, col: 48 },
             { row: 11, col: 4 }
         ]
     };
@@ -390,8 +390,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Seleccionamos un destino aleatorio
                 const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
                 
-                // Aplicamos cooldown solo al teleportador de origen
-                cooldowns[cooldownKey] = currentTime + teleportCooldown;
+                // Aplicamos cooldown a TODOS los teleportadores del grupo
+                group.forEach(tp => {
+                    const key = `${tp.row},${tp.col}`;
+                    cooldowns[key] = currentTime + teleportCooldown;
+                });
                 activeCooldown = true;
                 cooldownDisplay.style.display = 'block';
                 cooldownTimer.textContent = Math.ceil(teleportCooldown / 1000);
