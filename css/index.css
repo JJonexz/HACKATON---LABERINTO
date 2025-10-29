@@ -290,5 +290,87 @@ box-sizing: border-box;
 
     /* Audio controls ocultos */
     audio {
-    display: none;
+        display: none;
+    }
+
+    /* Controles de música */
+    #music-controls {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 12px;
+        border-radius: 30px;
+        border: 2px solid #e77018;
+        box-shadow: 0 0 15px rgba(231, 112, 24, 0.3);
+    }
+
+    #music-toggle {
+        background: none;
+        border: 2px solid #e77018;
+        color: #e77018;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        text-shadow: 0 0 10px #e77018;
+    }
+
+    #music-toggle:hover {
+        background: rgba(231, 112, 24, 0.2);
+        box-shadow: 0 0 20px rgba(231, 112, 24, 0.5);
+        transform: scale(1.05);
+    }
+
+    #music-volume {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(to right, #e77018 0%, #b44400 100%);
+        border-radius: 2px;
+        outline: none;
+    }
+
+    #music-volume::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #e77018;
+        border: 2px solid #b44400;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(231, 112, 24, 0.5);
+        transition: all 0.3s ease;
+    }
+
+    #music-volume::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #e77018;
+        border: 2px solid #b44400;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(231, 112, 24, 0.5);
+        transition: all 0.3s ease;
+    }
+
+    #music-volume::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(231, 112, 24, 0.7);
+    }
+
+    #music-volume::-moz-range-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(231, 112, 24, 0.7);
     }

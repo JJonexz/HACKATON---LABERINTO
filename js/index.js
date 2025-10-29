@@ -8,15 +8,119 @@ for(let i = 0; i < 30; i++) {
     document.body.appendChild(particle);
 }
 
-// Iniciar música de fondo
-const bgMusic = document.getElementById('bgMusic');
+// Iniciar música de fondo después de que el DOM cargue
+document.addEventListener('DOMContentLoaded', () => {
+    const bgMusic = document.getElementById('bgMusic');
+    if (!bgMusic) {
+        console.warn('No audio element with id "bgMusic" found in DOM.');
+        return;
+    }
 
-// Intentar reproducir la música automáticamente solo si tiene source válido
-if (bgMusic.children.length > 0) {
-    document.addEventListener('click', function() {
-        bgMusic.play().catch(e => console.log('Audio playback failed:', e));
-    }, { once: true });
-}
+    // Si no hay <source> ni src, asignar el fallback solicitado
+    if (bgMusic.children.length === 0 && !bgMusic.src) {
+        bgMusic.src = 'audio/suspenso.mp3';
+    }
+
+    // Recuperar el volumen guardado o usar el valor por defecto
+    const savedVolume = localStorage.getItem('musicVolume');
+    bgMusic.volume = savedVolume ? parseFloat(savedVolume) : 0.6;
+
+    // Función para reproducir la música
+    const playMusic = async () => {
+        try {
+            await bgMusic.play();
+            updateToggleUI();
+        } catch (error) {
+            console.log('Reproducción fallida:', error);
+        }
+    };
+
+    // Intentar reproducir inmediatamente
+    playMusic();
+
+    // Intentar reproducir con cualquier interacción del usuario
+    const startAudioOnInteraction = () => {
+        if (bgMusic.paused) {
+            playMusic();
+        }
+        document.removeEventListener('click', startAudioOnInteraction);
+        document.removeEventListener('touchstart', startAudioOnInteraction);
+        document.removeEventListener('keydown', startAudioOnInteraction);
+    };
+
+    document.addEventListener('click', startAudioOnInteraction);
+    document.addEventListener('touchstart', startAudioOnInteraction);
+    document.addEventListener('keydown', startAudioOnInteraction);
+
+    // Controles visibles
+    const musicToggle = document.getElementById('music-toggle');
+    const musicVolume = document.getElementById('music-volume');
+
+    // Estado inicial de volumen desde localStorage
+    if (musicVolume) {
+        const storedVolume = parseFloat(localStorage.getItem('musicVolume'));
+        if (!isNaN(storedVolume)) {
+            bgMusic.volume = Math.max(0, Math.min(1, storedVolume));
+        } else {
+            bgMusic.volume = parseFloat(musicVolume.value) || 0.6;
+        }
+        musicVolume.value = bgMusic.volume;
+    }
+
+    function updateToggleUI() {
+        if (!musicToggle) return;
+        if (bgMusic.paused) {
+            musicToggle.textContent = '▶';
+            musicToggle.classList.add('paused');
+            musicToggle.setAttribute('aria-label', 'Reproducir música');
+        } else {
+            musicToggle.textContent = '⏸';
+            musicToggle.classList.remove('paused');
+            musicToggle.setAttribute('aria-label', 'Pausar música');
+        }
+    }
+
+    // Intentar reproducir al primer click general (política de autoplay), pero no forzamos si falla
+    const tryPlayOnce = () => {
+        bgMusic.play().then(() => {
+            updateToggleUI();
+        }).catch(e => {
+            // No podemos reproducir (autoplay/permiso) — el usuario puede usar el botón
+            console.log('Audio autoplay blocked or failed:', e);
+        });
+    };
+    document.addEventListener('click', tryPlayOnce, { once: true });
+
+    // Botón de play/pause
+    if (musicToggle) {
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (bgMusic.paused) {
+                bgMusic.play().catch(err => console.log('Play failed:', err));
+            } else {
+                bgMusic.pause();
+            }
+            updateToggleUI();
+        });
+    }
+
+    // Slider de volumen
+    if (musicVolume) {
+        musicVolume.addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            bgMusic.volume = v;
+            localStorage.setItem('musicVolume', String(v));
+        });
+    }
+
+    // Actualizar UI cuando cambie el estado de reproducción
+    bgMusic.addEventListener('play', updateToggleUI);
+    bgMusic.addEventListener('pause', updateToggleUI);
+    bgMusic.addEventListener('ended', updateToggleUI);
+
+    // Inicializar UI
+    updateToggleUI();
+});
 
 function startGame() {
     // Efecto de transición mejorado
