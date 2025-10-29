@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let collectiblePulse = 0;
     
     // Posición de la salida (E)
-    const exitPosition = { row: 37, col: 52 };
+    const exitPosition = { row: 37, col: 51 };
     let exitIndicatorPulse = 0;
 
     // ========== MAPA NIVEL 2: TÚNELES ESTRECHOS (40x55) ==========
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "W   W   W   W   WWWWWWWWW   WWWWWWWWW   WWWWWWWWW   W",
         "W   W   W   W           T           W           W   W",
         "W   W   W   WWWWWWWWWWWWWWWWWWWWW   W   WWWWW   W   W",
-        "W   W   W   W                   W   W   W   W   W   W",
+        "W   W   W   W               Y   W   W   W   W   W   W",
         "W   W   W   W   WWWWWWWWWWWWW   W   W   W   W   W   W",
         "W   W       W   W   X       W   W       W   W       W",
         "W   WWWWWWWWW   W   WWWWW   W   WWWWWWWWW   WWWWWWWWW",
@@ -89,11 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
         "W   WWWWW   W   WWWWWWWWWWWWW   WWWWW   W   W   W   W",
         "W   W   W   W               W       W   W       W   W",
         "W   W   W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWW   W",
-        "W   W   W               W       W   W               W",
+        "W   W   W               W       W   W           X   W",
         "W   W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWWWWWWWWWW",
-        "W   W   L           W       W   W               X   W",
+        "W   W   L           W       W   W                   W",
         "W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWWWWWWWWWW   W",
-        "W               W       W       W               W  YE",
+        "W               W       W       W               W  EW",
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
     ];
 
@@ -108,11 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'X': [
             { row: 13, col: 20 },
-            { row: 35, col: 50 }
+            { row: 33, col: 52 }
         ],
         'Y': [
-            { row: 29, col: 28 },
-            { row: 37, col: 51 }
+            { row: 11, col: 28 },
+            { row: 29, col: 28 }
         ],
         'L': [
             { row: 5, col: 8 },
