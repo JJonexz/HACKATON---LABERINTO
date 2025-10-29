@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let animationId;
     let player = null;
     
+    // NUEVA VARIABLE: Rastrea la puerta en la que está el jugador
+    let currentDoorProximity = null; 
+
     // ========== SISTEMA DE NIVELES Y PROGRESO ==========
     const availableLevels = ['map1.html', 'map2.html', 'map3.html'];
     let progress = JSON.parse(localStorage.getItem('gameProgress') || '{"completed":[]}');
@@ -298,10 +301,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ========== LÓGICA DE SELECCIÓN DE NIVEL ==========
+
+    // FUNCIÓN MODIFICADA
     function checkDoorProximity() {
         const pos = player.getGridPosition();
-        
-        Object.entries(doors).forEach(([key, door]) => {
+        let isNearADoor = false; // Para rastrear si estamos cerca de *alguna* puerta
+
+        // Usar un bucle 'for...of' para poder salir temprano
+        for (const [key, door] of Object.entries(doors)) {
             const distance = Math.sqrt(
                 Math.pow(pos.row - door.row, 2) + 
                 Math.pow(pos.col - door.col, 2)
@@ -309,9 +316,24 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Si el jugador está cerca de la puerta
             if (distance < 2) {
-                selectLevel(door.level);
+                isNearADoor = true; // Marcamos que estamos cerca de una puerta
+                
+                // Solo activar si es la *primera vez* que entramos en la zona de esta puerta
+                if (currentDoorProximity !== key) { 
+                    currentDoorProximity = key; // Establecemos la puerta actual
+                    selectLevel(door.level); // Llamamos a la lógica de selección
+                }
+                
+                // Ya encontramos la puerta más cercana, no necesitamos seguir
+                break; 
             }
-        });
+        }
+
+        // Si no estamos cerca de *ninguna* puerta, reseteamos el estado
+        // Esto permite que el aviso vuelva a salir si el jugador se va y regresa
+        if (!isNearADoor) {
+            currentDoorProximity = null;
+        }
     }
     
     function selectLevel(levelIndex) {
@@ -328,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const doorInfo = Object.values(doors).find(d => d.level === levelIndex);
             
             // Crear y mostrar mensaje de bloqueo con efecto de sacudida
+            // (Esta lógica no se repetirá gracias al cambio en checkDoorProximity)
             const message = document.createElement('div');
             message.style.position = 'fixed';
             message.style.top = '50%';
@@ -371,9 +394,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Si el nivel está completado, pedir confirmación
+        // (Esta lógica tampoco se repetirá gracias al cambio)
         if (progress.completed.includes(levelNumber)) {
             const retry = confirm('Ya has completado este nivel. ¿Deseas intentarlo de nuevo?');
-            if (!retry) return;
+            
+            if (!retry) {
+                // !!!!! INICIO DE LA SOLUCIÓN !!!!!
+                // Reseteamos todas las teclas. El 'confirm' bloquea el hilo
+                // y puede hacer que se pierdan los eventos 'keyup'.
+                // Esto evita que el jugador se quede "pegado" moviéndose.
+                Object.keys(keys).forEach(key => { keys[key] = false; }); 
+                // !!!!! FIN DE LA SOLUCIÓN !!!!!
+                return; // Si el jugador cancela, la función termina.
+            }
         }
         
         gameActive = false;
@@ -391,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         player.update(keys, canMoveTo, 16);
         
+        // Esta función ahora tiene la nueva lógica
         checkDoorProximity();
 
         clearCanvas();
@@ -438,3 +472,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+
