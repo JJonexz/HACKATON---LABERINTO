@@ -106,22 +106,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAZE_ROWS = mazeMap.length;
     const MAZE_COLS = mazeMap[0].length;
     
-    // Teletransportadores interconectados para nivel 3
-    const teleportGroups = {
-        'A': [
-            { row: 11, col: 23 },
-            { row: 21, col: 32 },
-            { row: 36, col: 21 }
-        ],
-        'B': [
-            { row: 21, col: 32 },
-            { row: 36, col: 21 }
-        ],
-        'C': [
-            { row: 36, col: 21 },
-            { row: 11, col: 23 }
-        ]
-    };
+    // Teletransportadores: detecta automáticamente todas las posiciones de 'A', 'B', 'C' en el mapa
+    function buildTeleportGroups(map) {
+        const groups = { 'A': [], 'B': [], 'C': [] };
+        for (let r = 0; r < map.length; r++) {
+            for (let c = 0; c < map[r].length; c++) {
+                const cell = map[r][c];
+                if (groups[cell] !== undefined) {
+                    groups[cell].push({ row: r, col: c });
+                }
+            }
+        }
+        // Elimina grupos con menos de 2 (no sirven para teletransportar)
+        Object.keys(groups).forEach(k => { if (groups[k].length < 2) delete groups[k]; });
+        console.log('[TELEPORT] grupos detectados:', groups);
+        return groups;
+    }
+    let teleportGroups = buildTeleportGroups(mazeMap);
 
     const keys = {};
 
@@ -360,16 +361,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const cellType = mazeMap[pos.row][pos.col];
         const cooldownKey = `${pos.row},${pos.col}`;
 
-        // Si no es un tipo de teletransportador válido, salimos
+        // Si no es un tipo de teletransportador válido, salimos pero actualizamos el display de cooldown si aplica
         if (!teleportGroups[cellType]) {
-            if (cooldownDisplay.style.display === 'block') {
-                const currentTime = Date.now();
-                const remainingCooldown = Math.ceil((cooldowns[Object.keys(cooldowns)[0]] - currentTime) / 1000);
-                if (remainingCooldown <= 0) {
+            if (cooldownDisplay && cooldownDisplay.style.display === 'block') {
+                const keysArr = Object.keys(cooldowns);
+                if (keysArr.length > 0) {
+                    const currentTime = Date.now();
+                    const remainingCooldown = Math.ceil((cooldowns[keysArr[0]] - currentTime) / 1000);
+                    if (remainingCooldown <= 0) {
+                        cooldownDisplay.style.display = 'none';
+                        activeCooldown = false;
+                    } else {
+                        cooldownTimer.textContent = remainingCooldown;
+                    }
+                } else {
                     cooldownDisplay.style.display = 'none';
                     activeCooldown = false;
-                } else {
-                    cooldownTimer.textContent = remainingCooldown;
                 }
             }
             return;
@@ -388,34 +395,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const group = teleportGroups[cellType];
         if (group.length < 2) return;
 
-        // Encontramos el teleportador actual
-        const currentTeleport = group.find(tp => tp.row === pos.row && tp.col === pos.col);
-        
-        if (currentTeleport) {
-            // Filtramos los posibles destinos (excluyendo el actual)
-            const possibleTargets = group.filter(tp => tp.row !== pos.row || tp.col !== pos.col);
+        // Encontramos el índice del teleportador actual en el grupo
+        const idx = group.findIndex(tp => tp.row === pos.row && tp.col === pos.col);
+        if (idx !== -1 && group.length > 1) {
+            // Siguiente destino cíclico (no aleatorio)
+            const nextIdx = (idx + 1) % group.length;
+            const targetTeleport = group[nextIdx];
 
-            if (possibleTargets.length > 0) {
-                // Seleccionamos un destino aleatorio
-                const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-                
-                // Aplicamos cooldown a TODOS los teleportadores del grupo
-                group.forEach(tp => {
-                    const key = `${tp.row},${tp.col}`;
-                    cooldowns[key] = currentTime + teleportCooldown;
-                });
-                activeCooldown = true;
-                cooldownDisplay.style.display = 'block';
-                cooldownTimer.textContent = Math.ceil(teleportCooldown / 1000);
+            // Aplicamos cooldown a TODOS los teleportadores del grupo
+            group.forEach(tp => {
+                const key = `${tp.row},${tp.col}`;
+                cooldowns[key] = currentTime + teleportCooldown;
+            });
+            activeCooldown = true;
+            cooldownDisplay.style.display = 'block';
+            cooldownTimer.textContent = Math.ceil(teleportCooldown / 1000);
 
-                // Teleportamos al jugador centrado en la celda de destino
-                const centerX = (targetTeleport.col + 0.5) * GRID_SIZE;
-                const centerY = (targetTeleport.row + 0.5) * GRID_SIZE;
-                player.x = centerX;
-                player.y = centerY;
-                player.dx = 0;
-                player.dy = 0;
-            }
+            // Teleportamos al jugador centrado en la celda de destino
+            const centerX = (targetTeleport.col + 0.5) * GRID_SIZE;
+            const centerY = (targetTeleport.row + 0.5) * GRID_SIZE;
+            player.x = centerX;
+            player.y = centerY;
+            player.dx = 0;
+            player.dy = 0;
         }
     }
 
@@ -557,56 +559,55 @@ document.addEventListener('DOMContentLoaded', () => {
         animationId = requestAnimationFrame(gameLoop);
     }
 
-    function startGame() {
-        initializeGame();
-        calculateSizes();
-        
-        player = new Player(0, 0, GRID_SIZE);
-        player.setGridPosition(playerStartRow, playerStartCol);
-        
-        // Ajustar zoom de cámara para que el mapa entero quepa en la ventana si es necesario,
-        // pero no alejarla demasiado (mínimo 1.0)
-        try {
-            const availableWidth = window.innerWidth;
-            const availableHeight = window.innerHeight - 70; // mismo cálculo que calculateSizes
-            const mapPixelWidth = canvas.width;
-            const mapPixelHeight = canvas.height;
-            if (mapPixelWidth > 0 && mapPixelHeight > 0) {
-                const fitZoom = Math.min(availableWidth / mapPixelWidth, availableHeight / mapPixelHeight);
-                const minZoom = 1.0; // no alejar más allá de 1.0
-                const desiredZoom = Math.max(minZoom, fitZoom);
-                // Solo ajustar si desiredZoom es menor al zoom actual (reducir ligeramente si hace falta)
-                if (desiredZoom > 0 && desiredZoom < player.cameraZoom) {
-                    console.log('Adjusting player cameraZoom for full-map fit (clamped):', desiredZoom);
-                    player.cameraZoom = desiredZoom;
-                }
+function startGame() {
+    initializeGame();
+    calculateSizes();
+    
+    player = new Player(0, 0, GRID_SIZE);
+    player.setGridPosition(playerStartRow, playerStartCol);
+    
+    // Ajustar zoom de cámara para que el zoom esté más cerca del jugador
+    try {
+        const availableWidth = window.innerWidth;
+        const availableHeight = window.innerHeight - 70; // mismo cálculo que calculateSizes
+        const mapPixelWidth = canvas.width;
+        const mapPixelHeight = canvas.height;
+        if (mapPixelWidth > 0 && mapPixelHeight > 0) {
+            const fitZoom = Math.min(availableWidth / mapPixelWidth, availableHeight / mapPixelHeight);
+            const minZoom = 2.5; // Valor aumentado para zoom más cercano al jugador
+            const desiredZoom = Math.max(minZoom, fitZoom);
+            // Aplicar el zoom deseado (más cercano)
+            if (desiredZoom > 0) {
+                console.log('Adjusting player cameraZoom to be closer:', desiredZoom);
+                player.cameraZoom = desiredZoom;
             }
-        } catch (e) {
-            console.warn('Failed to compute fit zoom for map3:', e);
         }
-        
-        window.addEventListener('resize', resizeGame);
-        
-        setTimeout(() => {
-            loadingOverlay.classList.add('hidden');
-        }, 1000);
-        
-        timerInterval = setInterval(() => {
-            if (!gameActive || isPaused) {
-                return;
-            }
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-
-            if (timeLeft <= 0) {
-                loseGame();
-            }
-        }, 1000);
-        
-        lastTime = 0;
-        lastFpsUpdate = performance.now();
-        animationId = requestAnimationFrame(gameLoop);
+    } catch (e) {
+        console.warn('Failed to compute fit zoom:', e);
     }
+    
+    window.addEventListener('resize', resizeGame);
+    
+    setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+    }, 1000);
+    
+    timerInterval = setInterval(() => {
+        if (!gameActive || isPaused) {
+            return;
+        }
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            loseGame();
+        }
+    }, 1000);
+    
+    lastTime = 0;
+    lastFpsUpdate = performance.now();
+    animationId = requestAnimationFrame(gameLoop);
+}
 
     startGame();
 

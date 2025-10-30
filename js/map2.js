@@ -662,35 +662,35 @@ document.addEventListener('DOMContentLoaded', () => {
         retryButton.textContent = "Volver al Menú";
     }
 
-    function gameLoop(timestamp) {
-        if (!gameActive) return;
-        
-        if (isPaused) {
-            animationId = requestAnimationFrame(gameLoop);
-            return;
-        }
-        
-        if (lastTime === 0) {
-            lastTime = timestamp;
-        }
-        const deltaTime = timestamp - lastTime;
+function gameLoop(timestamp) {
+    if (!gameActive) return;
+    
+    if (isPaused) {
+        animationId = requestAnimationFrame(gameLoop);
+        return;
+    }
+    
+    if (lastTime === 0) {
         lastTime = timestamp;
+    }
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
 
-        frameCount++;
-        if (timestamp - lastFpsUpdate > 1000) {
-            currentFps = Math.round(frameCount * 1000 / (timestamp - lastFpsUpdate));
-            fpsElement.textContent = currentFps;
-            frameCount = 0;
-            lastFpsUpdate = timestamp;
-        }
+    frameCount++;
+    if (timestamp - lastFpsUpdate > 1000) {
+        currentFps = Math.round(frameCount * 1000 / (timestamp - lastFpsUpdate));
+        fpsElement.textContent = currentFps;
+        frameCount = 0;
+        lastFpsUpdate = timestamp;
+    }
 
-        player.update(keys, canMoveTo, deltaTime);
-        
-        checkWinCondition();
-        checkCollectible();
-        checkTeleport();
+    player.update(keys, canMoveTo, deltaTime);
+    
+    checkWinCondition();
+    checkCollectible();
+    checkTeleport();
 
-        clearCanvas();
+    clearCanvas();
     // Aplicar cámara centrada en el jugador y con zoom
     player.applyCamera(ctx, canvas.width, canvas.height);
     drawMaze();
@@ -701,41 +701,61 @@ document.addEventListener('DOMContentLoaded', () => {
     player.restoreCamera(ctx);
 
     animationId = requestAnimationFrame(gameLoop);
-    }
+}
 
-    function startGame() {
-        initializeGame();
-        calculateSizes();
-        
-        player = new Player(0, 0, GRID_SIZE);
-        player.setGridPosition(playerStartRow, playerStartCol);
-        
-        // NO cargar el estado del coleccionable al iniciar
-        // El coleccionable siempre aparece al comenzar el nivel
-        // Solo se guarda en localStorage cuando se recoge para el menú principal
-        
-        window.addEventListener('resize', resizeGame);
-        
-        setTimeout(() => {
-            loadingOverlay.classList.add('hidden');
-        }, 1000);
-        
-        timerInterval = setInterval(() => {
-            if (!gameActive || isPaused) {
-                return;
+function startGame() {
+    initializeGame();
+    calculateSizes();
+    
+    player = new Player(0, 0, GRID_SIZE);
+    player.setGridPosition(playerStartRow, playerStartCol);
+    
+    // Ajustar zoom de cámara para que esté más cerca del jugador
+    try {
+        const availableWidth = window.innerWidth;
+        const availableHeight = window.innerHeight - 70; // mismo cálculo que calculateSizes
+        const mapPixelWidth = canvas.width;
+        const mapPixelHeight = canvas.height;
+        if (mapPixelWidth > 0 && mapPixelHeight > 0) {
+            const fitZoom = Math.min(availableWidth / mapPixelWidth, availableHeight / mapPixelHeight);
+            const minZoom = 2.5; // Valor aumentado para zoom más cercano al jugador
+            const desiredZoom = Math.max(minZoom, fitZoom);
+            // Aplicar el zoom deseado (más cercano)
+            if (desiredZoom > 0) {
+                console.log('Adjusting player cameraZoom to be closer:', desiredZoom);
+                player.cameraZoom = desiredZoom;
             }
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-
-            if (timeLeft <= 0) {
-                loseGame();
-            }
-        }, 1000);
-        
-        lastTime = 0;
-        lastFpsUpdate = performance.now();
-        animationId = requestAnimationFrame(gameLoop);
+        }
+    } catch (e) {
+        console.warn('Failed to compute fit zoom:', e);
     }
+    
+    // NO cargar el estado del coleccionable al iniciar
+    // El coleccionable siempre aparece al comenzar el nivel
+    // Solo se guarda en localStorage cuando se recoge para el menú principal
+    
+    window.addEventListener('resize', resizeGame);
+    
+    setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+    }, 1000);
+    
+    timerInterval = setInterval(() => {
+        if (!gameActive || isPaused) {
+            return;
+        }
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            loseGame();
+        }
+    }, 1000);
+    
+    lastTime = 0;
+    lastFpsUpdate = performance.now();
+    animationId = requestAnimationFrame(gameLoop);
+}
 
     startGame();
 

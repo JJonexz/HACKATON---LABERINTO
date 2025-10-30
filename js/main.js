@@ -16,9 +16,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentDoorProximity = null; 
 
     // ========== SISTEMA DE NIVELES Y PROGRESO ==========
-    const availableLevels = ['map1.html', 'map2.html', 'map3.html'];
+    // Niveles disponibles (añade más objetos aquí cuando quieras nuevos mapas)
+    const levels = [
+        { file: 'map1.html', id: 1, name: 'NIVEL 1' },
+        { file: 'map2.html', id: 2, name: 'NIVEL 2' },
+        { file: 'map3.html', id: 3, name: 'NIVEL 3' }
+    ];
     let progress = JSON.parse(localStorage.getItem('gameProgress') || '{"completed":[]}');
-    
+
+    // Pool de niveles disponibles (siempre todos disponibles)
+    let availableLevels = [];
+
+    function buildAvailableLevels() {
+        // TODOS los niveles están siempre disponibles para selección aleatoria
+        // No hay bloqueo por progreso - todos accesibles desde el inicio
+        availableLevels = levels.slice();
+        console.log('[MAIN] Niveles disponibles:', availableLevels.map(p => p.file));
+    }
+
     // Actualizar el contador de niveles completados
     function updateProgress() {
         // Asegurar que progress.completed es un array válido
@@ -30,23 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const levelsCompletedElement = document.getElementById('levels-completed');
         if (levelsCompletedElement) {
             levelsCompletedElement.textContent = progress.completed.length;
-        }
-        
-        // Actualizar estado del coleccionable
-        const collectibleCheckMain = document.getElementById('collectible-check-main');
-        const collectiblesIndicator = document.getElementById('collectibles-indicator');
-        if (localStorage.getItem('map2_collectible') === 'true') {
-            collectibleCheckMain.textContent = '✓';
-            collectibleCheckMain.style.color = '#00ff00';
-            collectibleCheckMain.style.textShadow = '0 0 10px #00ff00';
-            collectiblesIndicator.style.opacity = '1';
-            collectiblesIndicator.style.filter = 'grayscale(0)';
-        } else {
-            collectibleCheckMain.textContent = '✗';
-            collectibleCheckMain.style.color = '#ff4444';
-            collectibleCheckMain.style.textShadow = 'none';
-            collectiblesIndicator.style.opacity = '0.3';
-            collectiblesIndicator.style.filter = 'grayscale(1)';
         }
         
         // Mostrar mensaje de victoria total solo si TODOS los niveles están completados
@@ -76,16 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ========== MAPA DE SELECCIÓN (sala con 3 puertas) ==========
+    // Un único casete/puerta ('D') donde aparecerá un mapa aleatorio no repetido.
     const selectorMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-        "W                             W",
-        "W                             W",
-        "W                             W",
-        "W    D1         D2        D3  W",
-        "W    WW         WW        WW  W",
-        "W    WW         WW        WW  W",
-        "W    WW         WW        WW  W",
-        "W                             W",
+        "W         W       W           W",
+        "W         W       W           W",
+        "W         W       W           W",
+        "W         W   D   W           W",
+        "W         W       W           W",
+        "W         W       W           W",
+        "W         W       W           W",
+        "W         WWW   WWW           W",
         "W                             W",
         "W                             W",
         "W                             W",
@@ -98,11 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAP_ROWS = selectorMap.length;
     const MAP_COLS = selectorMap[0].length;
     
-    // Posiciones de las puertas
+    // Posición de la única puerta/cápsula
     const doors = {
-        'D1': { row: 4, col: 5, level: 0, name: 'NIVEL 1' },
-        'D2': { row: 4, col: 16, level: 1, name: 'NIVEL 2' },
-        'D3': { row: 4, col: 26, level: 2, name: 'NIVEL 3' }
+        'D': { row: 4, col: 15 }
     };
     
     let playerStartRow = 12;
@@ -201,61 +198,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.strokeRect(x, y, GRID_SIZE, GRID_SIZE);
                         break;
                         
-                    case 'D1':
-                    case 'D2':
-                    case 'D3':
-                        const doorInfo = doors[cell];
+                    case 'D':
                         const pulse = Math.sin(currentTime * 0.003) * 0.3 + 0.7;
-                        
-                        // Color según el estado del nivel
-                        const levelIndex = parseInt(cell.replace('D', ''));
-                        const isCompleted = progress.completed.includes(levelIndex);
-                        const isLocked = levelIndex > 1 && !progress.completed.includes(levelIndex - 1);
-                        
-                        let doorColor;
-                        if (isCompleted) {
-                            doorColor = `rgba(0, 255, 0, ${pulse})`; // Verde para completados
-                        } else if (isLocked) {
-                            doorColor = `rgba(100, 100, 100, ${pulse * 0.5})`; // Gris para bloqueados
-                        } else {
-                            switch(cell) {
-                                case 'D1':
-                                    doorColor = `rgba(0, 100, 255, ${pulse})`;
-                                    break;
-                                case 'D2':
-                                    doorColor = `rgba(0, 255, 100, ${pulse})`;
-                                    break;
-                                case 'D3':
-                                    doorColor = `rgba(200, 0, 255, ${pulse})`;
-                                    break;
-                            }
-                        }
-                        
+
+                        // SIEMPRE mostrar como disponible (azul)
+                        const doorColor = `rgba(0, 120, 255, ${pulse})`;
+
                         ctx.fillStyle = doorColor;
                         ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
-                        
-                        // Efecto de candado para niveles bloqueados
-                        if (isLocked) {
-                            ctx.font = `bold ${GRID_SIZE * 0.6}px Arial`;
-                            ctx.fillStyle = '#FF0000';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText('🔒', x + GRID_SIZE / 2, y + GRID_SIZE / 2);
-                        } else {
-                            ctx.shadowBlur = 20 * pulse;
-                            ctx.shadowColor = doorColor;
-                            ctx.strokeStyle = doorColor;
-                            ctx.lineWidth = 3;
-                            ctx.strokeRect(x + 2, y + 2, GRID_SIZE - 4, GRID_SIZE - 4);
-                            ctx.shadowBlur = 0;
-                        }
-                        
-                        // Texto del nivel
-                        ctx.font = `bold ${GRID_SIZE * 0.4}px Arial`;
+
+                        ctx.shadowBlur = 20 * pulse;
+                        ctx.shadowColor = doorColor;
+                        ctx.strokeStyle = doorColor;
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(x + 2, y + 2, GRID_SIZE - 4, GRID_SIZE - 4);
+                        ctx.shadowBlur = 0;
+
+                        // Texto: siempre mostrar como disponible
+                        ctx.font = `bold ${GRID_SIZE * 0.45}px Arial`;
                         ctx.fillStyle = '#FFFFFF';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.fillText(levelIndex, x + GRID_SIZE / 2, y + GRID_SIZE / 2);
+                        ctx.fillText('▶', x + GRID_SIZE / 2, y + GRID_SIZE / 2);
                         break;
                         
                     default:
@@ -271,16 +235,17 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        Object.entries(doors).forEach(([key, door]) => {
-            const x = door.col * GRID_SIZE + GRID_SIZE / 2;
-            const y = (door.row - 1) * GRID_SIZE + GRID_SIZE / 2;
-            
+        // Texto encima de la puerta única - SIEMPRE mostrar "Viajar"
+        const singleDoor = Object.values(doors)[0];
+        if (singleDoor) {
+            const x = singleDoor.col * GRID_SIZE + GRID_SIZE / 2 - Math.round(GRID_SIZE * 1);
+            const y = (singleDoor.row - 1) * GRID_SIZE + GRID_SIZE / 2;
             ctx.fillStyle = '#FFFF00';
             ctx.shadowBlur = 10;
             ctx.shadowColor = '#FFFF00';
-            ctx.fillText(door.name, x, y);
+            ctx.fillText('Viajar', x, y);
             ctx.shadowBlur = 0;
-        });
+        }
     }
 
     // ========== SISTEMA DE LUZ ==========
@@ -319,6 +284,47 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ========== LÓGICA DE SELECCIÓN DE NIVEL ==========
 
+    function selectRandomLevel() {
+        // Siempre reconstruir la lista de niveles disponibles
+        buildAvailableLevels();
+
+        if (!availableLevels || availableLevels.length === 0) {
+            const msg = document.createElement('div');
+            msg.style.position = 'fixed';
+            msg.style.top = '50%';
+            msg.style.left = '50%';
+            msg.style.transform = 'translate(-50%, -50%)';
+            msg.style.background = 'rgba(0,0,0,0.9)';
+            msg.style.color = '#fff';
+            msg.style.padding = '20px';
+            msg.style.borderRadius = '8px';
+            msg.style.zIndex = '1000';
+            msg.textContent = 'No hay mapas disponibles.';
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 2000);
+            return;
+        }
+
+        // Elegir un nivel aleatorio de TODOS los disponibles
+        const idx = Math.floor(Math.random() * availableLevels.length);
+        const chosen = availableLevels[idx];
+        console.log('[MAIN] Nivel elegido aleatoriamente:', chosen);
+
+        startLevel(chosen);
+    }
+
+    function startLevel(levelObj) {
+        gameActive = false;
+        loadingOverlay.classList.remove('hidden');
+        
+        // Redirigir al nivel seleccionado
+        setTimeout(() => {
+            if (levelObj) {
+                window.location.href = levelObj.file;
+            }
+        }, 1000);
+    }
+
     // FUNCIÓN MODIFICADA
     function checkDoorProximity() {
         const pos = player.getGridPosition();
@@ -338,7 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Solo activar si es la *primera vez* que entramos en la zona de esta puerta
                 if (currentDoorProximity !== key) { 
                     currentDoorProximity = key; // Establecemos la puerta actual
-                    selectLevel(door.level); // Llamamos a la lógica de selección
+                    // Selección aleatoria y no repetida
+                    selectRandomLevel();
                 }
                 
                 // Ya encontramos la puerta más cercana, no necesitamos seguir
@@ -351,88 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isNearADoor) {
             currentDoorProximity = null;
         }
-    }
-    
-    function selectLevel(levelIndex) {
-        // Asegurar que progress.completed es un array
-        if (!Array.isArray(progress.completed)) {
-            progress.completed = [];
-            localStorage.setItem('gameProgress', JSON.stringify(progress));
-        }
-
-        const levelNumber = levelIndex + 1;
-
-        // Verificar si el nivel está bloqueado (debe completar el anterior primero)
-        if (levelIndex > 0 && !progress.completed.includes(levelIndex)) {
-            const doorInfo = Object.values(doors).find(d => d.level === levelIndex);
-            
-            // Crear y mostrar mensaje de bloqueo con efecto de sacudida
-            // (Esta lógica no se repetirá gracias al cambio en checkDoorProximity)
-            const message = document.createElement('div');
-            message.style.position = 'fixed';
-            message.style.top = '50%';
-            message.style.left = '50%';
-            message.style.transform = 'translate(-50%, -50%)';
-            message.style.background = 'rgba(40, 0, 0, 0.95)';
-            message.style.color = '#ff0000';
-            message.style.padding = '20px 30px';
-            message.style.borderRadius = '10px';
-            message.style.border = '3px solid #ff0000';
-            message.style.zIndex = '1000';
-            message.style.textAlign = 'center';
-            message.style.fontSize = '1.4em';
-            message.style.boxShadow = '0 0 30px rgba(255, 0, 0, 0.3)';
-            message.style.animation = 'shake 0.5s ease-in-out';
-            message.innerHTML = `¡${doorInfo.name} BLOQUEADO!<br><span style="font-size: 0.8em; color: #ff6666">Completa el nivel anterior primero</span>`;
-            
-            // Añadir keyframes para la animación de sacudida
-            if (!document.getElementById('shake-style')) {
-                const style = document.createElement('style');
-                style.id = 'shake-style';
-                style.textContent = `
-                    @keyframes shake {
-                        0%, 100% { transform: translate(-50%, -50%); }
-                        10%, 30%, 50%, 70%, 90% { transform: translate(-52%, -50%); }
-                        20%, 40%, 60%, 80% { transform: translate(-48%, -50%); }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            document.body.appendChild(message);
-            setTimeout(() => {
-                message.style.transition = 'opacity 0.5s ease';
-                message.style.opacity = '0';
-                setTimeout(() => {
-                    message.remove();
-                }, 500);
-            }, 2000);
-            return;
-        }
-
-        // Si el nivel está completado, pedir confirmación
-        // (Esta lógica tampoco se repetirá gracias al cambio)
-        if (progress.completed.includes(levelNumber)) {
-            const retry = confirm('Ya has completado este nivel. ¿Deseas intentarlo de nuevo?');
-            
-            if (!retry) {
-                // !!!!! INICIO DE LA SOLUCIÓN !!!!!
-                // Reseteamos todas las teclas. El 'confirm' bloquea el hilo
-                // y puede hacer que se pierdan los eventos 'keyup'.
-                // Esto evita que el jugador se quede "pegado" moviéndose.
-                Object.keys(keys).forEach(key => { keys[key] = false; }); 
-                // !!!!! FIN DE LA SOLUCIÓN !!!!!
-                return; // Si el jugador cancela, la función termina.
-            }
-        }
-        
-        gameActive = false;
-        loadingOverlay.classList.remove('hidden');
-        
-        // Redirigir al nivel correspondiente
-        setTimeout(() => {
-            window.location.href = availableLevels[levelIndex];
-        }, 1000);
     }
 
     // ========== BUCLE PRINCIPAL ==========
@@ -465,7 +390,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         window.addEventListener('resize', resizeGame);
         
-        // Actualizar progreso al inicio
+        // Inicializar niveles disponibles
+        buildAvailableLevels();
         updateProgress();
         
         gameActive = true;
@@ -493,4 +419,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
-
