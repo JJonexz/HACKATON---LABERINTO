@@ -43,6 +43,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const cooldownDisplay = document.getElementById('teleport-cooldown');
     const cooldownTimer = document.getElementById('cooldown-timer');
 
+    // Coleccionable de rueda
+    const collectibleIndicator = document.getElementById('collectible-indicator');
+    const collectibleCheck = document.getElementById('collectible-check');
+    let collectibleCollected = false;
+    const collectiblePosition = { row: 17, col: 8 }; // Posición oculta en el mapa (pasillo estrecho)
+    let collectiblePulse = 0;
+    
+    // Posición de la salida (E)
+    const exitPosition = { row: 37, col: 51 };
+    let exitIndicatorPulse = 0;
+
     // ========== MAPA NIVEL 2: TÚNELES ESTRECHOS (40x55) ==========
     const mazeMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
@@ -56,13 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
         "W   W   W   W   WWWWWWWWW   WWWWWWWWW   WWWWWWWWW   W",
         "W   W   W   W           T           W           W   W",
         "W   W   W   WWWWWWWWWWWWWWWWWWWWW   W   WWWWW   W   W",
-        "W   W   W   W                   W   W   W   W   W   W",
+        "W   W   W   W               Y   W   W   W   W   W   W",
         "W   W   W   W   WWWWWWWWWWWWW   W   W   W   W   W   W",
         "W   W       W   W   X       W   W       W   W       W",
         "W   WWWWWWWWW   W   WWWWW   W   WWWWWWWWW   WWWWWWWWW",
         "W           W   W       W   W               W       W",
         "WWWWWWWWW   W   WWWWW   W   WWWWWWWWWWWWW   W   W   W",
-        "W       W   W       W   W               W   W   W   W",
+        "W       R   W       W   W               W   W   W   W",
         "W   W   W   WWWWW   W   WWWWWWWWWWWWW   W   W   W   W",
         "W   W   W       W   W           W   L   W   W   W   W",
         "W   W   WWWWW   W   WWWWWWWW    W   WWWWW   W   W   W",
@@ -74,11 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
         "W   WWWWWWWWWWWWW   W   WWWWWWWWW   W   WWWWW   W   W",
         "W               W   W           W   W       W   W   W",
         "WWWWWWWWWWWWW   W   WWWWWWWWW   W   WWWWW   W   W   W",
-        "W           W   W           Y   W       W   W   W   W",
+        "W           W   W       T   Y   W       W   W   W   W",
         "W   WWWWW   W   WWWWWWWWWWWWW   WWWWW   W   W   W   W",
         "W   W   W   W               W       W   W       W   W",
         "W   W   W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWW   W",
-        "W   W   W               W       W   W               W",
+        "W   W   W               W       W   W           X   W",
         "W   W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWWWWWWWWWW",
         "W   W   L           W       W   W                   W",
         "W   WWWWWWWWWWWWW   WWWWW   W   WWWWWWWWWWWWWWWWW   W",
@@ -92,20 +103,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Teletransportadores para nivel 2
     const teleportGroups = {
         'T': [
-            { row: 9, col: 20 },
+            { row: 9, col: 24 },
             { row: 29, col: 24 }
         ],
         'X': [
-            { row: 13, col: 12 },
-            { row: 29, col: 24 }
+            { row: 13, col: 20 },
+            { row: 33, col: 52 }
         ],
         'Y': [
-            { row: 29, col: 24 },
-            { row: 37, col: 48 }
+            { row: 11, col: 28 },
+            { row: 29, col: 28 }
         ],
         'L': [
             { row: 5, col: 8 },
-            { row: 19, col: 32 },
+            { row: 19, col: 36 },
             { row: 35, col: 8 }
         ]
     };
@@ -292,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.fillText(icon, x + GRID_SIZE / 2, y + GRID_SIZE / 2);
                         break;
                         
+                    case 'R':
                     case 'P':
                     case ' ':
                         ctx.fillStyle = '#000000'; 
@@ -339,8 +351,154 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkWinCondition() {
         const pos = player.getGridPosition();
         if (mazeMap[pos.row][pos.col] === 'E') {
-            winGame();
+            // Solo ganar si tiene el coleccionable
+            if (collectibleCollected) {
+                winGame();
+            } else {
+                // Mostrar mensaje temporal de que necesita el coleccionable
+                showTemporaryMessage("¡Necesitas el coleccionable 🎡 para salir!");
+            }
         }
+    }
+    
+    function showTemporaryMessage(text) {
+        // Crear elemento de mensaje temporal
+        let tempMsg = document.getElementById('temp-message');
+        if (!tempMsg) {
+            tempMsg = document.createElement('div');
+            tempMsg.id = 'temp-message';
+            tempMsg.style.position = 'fixed';
+            tempMsg.style.top = '50%';
+            tempMsg.style.left = '50%';
+            tempMsg.style.transform = 'translate(-50%, -50%)';
+            tempMsg.style.background = 'rgba(255, 0, 0, 0.9)';
+            tempMsg.style.color = '#fff';
+            tempMsg.style.padding = '20px 40px';
+            tempMsg.style.borderRadius = '10px';
+            tempMsg.style.fontSize = '1.5em';
+            tempMsg.style.zIndex = '1000';
+            tempMsg.style.border = '3px solid #ff0000';
+            tempMsg.style.boxShadow = '0 0 30px rgba(255, 0, 0, 0.8)';
+            tempMsg.style.fontFamily = 'Courier New, monospace';
+            tempMsg.style.textAlign = 'center';
+            document.body.appendChild(tempMsg);
+        }
+        
+        tempMsg.textContent = text;
+        tempMsg.style.display = 'block';
+        
+        // Ocultar después de 2 segundos
+        setTimeout(() => {
+            tempMsg.style.display = 'none';
+        }, 2000);
+    }
+    
+    function drawCollectible() {
+        if (collectibleCollected) return;
+        
+        const x = collectiblePosition.col * GRID_SIZE;
+        const y = collectiblePosition.row * GRID_SIZE;
+        
+        collectiblePulse += 0.05;
+        const pulse = Math.sin(collectiblePulse) * 0.3 + 0.7;
+        const glow = Math.sin(collectiblePulse * 2) * 10 + 15;
+        
+        // Fondo brillante
+        ctx.fillStyle = `rgba(255, 215, 0, ${pulse * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(x + GRID_SIZE / 2, y + GRID_SIZE / 2, GRID_SIZE / 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Efecto de brillo
+        ctx.shadowBlur = glow;
+        ctx.shadowColor = '#FFD700';
+        
+        // Dibujar rueda (emoji)
+        ctx.font = `${GRID_SIZE * 0.7}px Arial`;
+        ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎡', x + GRID_SIZE / 2, y + GRID_SIZE / 2);
+        
+        ctx.shadowBlur = 0;
+    }
+    
+    function checkCollectible() {
+        if (collectibleCollected) return;
+        
+        const pos = player.getGridPosition();
+        if (pos.row === collectiblePosition.row && pos.col === collectiblePosition.col) {
+            collectibleCollected = true;
+            collectibleIndicator.classList.remove('collectible-uncollected');
+            collectibleIndicator.classList.add('collectible-collected');
+            collectibleCheck.textContent = '✓';
+            
+            // Guardar en localStorage
+            localStorage.setItem('map2_collectible', 'true');
+        }
+    }
+    
+    function drawExitIndicator() {
+        if (!collectibleCollected) return;
+        
+        exitIndicatorPulse += 0.08;
+        const pulse = Math.sin(exitIndicatorPulse) * 0.4 + 0.6;
+        
+        // Calcular dirección hacia la salida
+        const exitX = (exitPosition.col + 0.5) * GRID_SIZE;
+        const exitY = (exitPosition.row + 0.5) * GRID_SIZE;
+        
+        const dx = exitX - player.x;
+        const dy = exitY - player.y;
+        const angle = Math.atan2(dy, dx);
+        
+        // Dibujar luz violeta direccional cerca del jugador
+        const distance = 80; // Distancia del indicador respecto al jugador
+        const indicatorX = player.x + Math.cos(angle) * distance;
+        const indicatorY = player.y + Math.sin(angle) * distance;
+        
+        // Efecto de brillo
+        const gradient = ctx.createRadialGradient(
+            indicatorX, indicatorY, 0,
+            indicatorX, indicatorY, 30 * pulse
+        );
+        gradient.addColorStop(0, `rgba(138, 43, 226, ${pulse})`);
+        gradient.addColorStop(0.5, `rgba(138, 43, 226, ${pulse * 0.5})`);
+        gradient.addColorStop(1, 'rgba(138, 43, 226, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, 30 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Dibujar círculo central
+        ctx.fillStyle = `rgba(186, 85, 211, ${pulse})`;
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Dibujar borde brillante
+        ctx.strokeStyle = `rgba(238, 130, 238, ${pulse})`;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#8A2BE2';
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, 15, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        // Dibujar flecha apuntando hacia la salida
+        ctx.save();
+        ctx.translate(indicatorX, indicatorY);
+        ctx.rotate(angle);
+        ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(-4, -6);
+        ctx.lineTo(-4, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
     }
     
     function checkTeleport() {
@@ -529,13 +687,16 @@ document.addEventListener('DOMContentLoaded', () => {
         player.update(keys, canMoveTo, deltaTime);
         
         checkWinCondition();
+        checkCollectible();
         checkTeleport();
 
         clearCanvas();
     // Aplicar cámara centrada en el jugador y con zoom
     player.applyCamera(ctx, canvas.width, canvas.height);
     drawMaze();
+    drawCollectible();
     player.draw(ctx);
+    drawExitIndicator(); // Dibujar indicador violeta si tiene el coleccionable
     drawLighting();
     player.restoreCamera(ctx);
 
@@ -548,6 +709,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         player = new Player(0, 0, GRID_SIZE);
         player.setGridPosition(playerStartRow, playerStartCol);
+        
+        // NO cargar el estado del coleccionable al iniciar
+        // El coleccionable siempre aparece al comenzar el nivel
+        // Solo se guarda en localStorage cuando se recoge para el menú principal
         
         window.addEventListener('resize', resizeGame);
         

@@ -106,22 +106,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAZE_ROWS = mazeMap.length;
     const MAZE_COLS = mazeMap[0].length;
     
-    // Teletransportadores: detecta automáticamente todas las posiciones de 'A', 'B', 'C' en el mapa
-    function buildTeleportGroups(map) {
-        const groups = { 'A': [], 'B': [], 'C': [] };
-        for (let r = 0; r < map.length; r++) {
-            for (let c = 0; c < map[r].length; c++) {
-                const cell = map[r][c];
-                if (groups[cell] !== undefined) {
-                    groups[cell].push({ row: r, col: c });
-                }
-            }
-        }
-        // Elimina grupos vacíos
-        Object.keys(groups).forEach(k => { if (groups[k].length < 2) delete groups[k]; });
-        return groups;
-    }
-    const teleportGroups = buildTeleportGroups(mazeMap);
+    // Teletransportadores interconectados para nivel 3
+    const teleportGroups = {
+        'A': [
+            { row: 11, col: 23 },
+            { row: 21, col: 32 },
+            { row: 36, col: 21 }
+        ],
+        'B': [
+            { row: 21, col: 32 },
+            { row: 36, col: 21 }
+        ],
+        'C': [
+            { row: 36, col: 21 },
+            { row: 11, col: 23 }
+        ]
+    };
 
     const keys = {};
 

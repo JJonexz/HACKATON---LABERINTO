@@ -32,6 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
             levelsCompletedElement.textContent = progress.completed.length;
         }
         
+        // Actualizar estado del coleccionable
+        const collectibleCheckMain = document.getElementById('collectible-check-main');
+        const collectiblesIndicator = document.getElementById('collectibles-indicator');
+        if (localStorage.getItem('map2_collectible') === 'true') {
+            collectibleCheckMain.textContent = '✓';
+            collectibleCheckMain.style.color = '#00ff00';
+            collectibleCheckMain.style.textShadow = '0 0 10px #00ff00';
+            collectiblesIndicator.style.opacity = '1';
+            collectiblesIndicator.style.filter = 'grayscale(0)';
+        } else {
+            collectibleCheckMain.textContent = '✗';
+            collectibleCheckMain.style.color = '#ff4444';
+            collectibleCheckMain.style.textShadow = 'none';
+            collectiblesIndicator.style.opacity = '0.3';
+            collectiblesIndicator.style.filter = 'grayscale(1)';
+        }
+        
         // Mostrar mensaje de victoria total solo si TODOS los niveles están completados
         if (progress.completed.length === 3 && progress.completed.includes(1) && progress.completed.includes(2) && progress.completed.includes(3)) {
             // Solo mostrar si no existe ya
@@ -467,6 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetProgressButton.addEventListener('click', () => {
             if (confirm('¿Estás seguro de que quieres reiniciar todo tu progreso? Esto no se puede deshacer.')) {
                 localStorage.setItem('gameProgress', JSON.stringify({"completed":[]}));
+                localStorage.removeItem('map2_collectible'); // Limpiar coleccionables
                 progress = {"completed":[]};
                 updateProgress();
                 location.reload();
