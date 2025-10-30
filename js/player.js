@@ -17,7 +17,7 @@ class Player {
         this.isMoving = false;
         
         // ========== CÁMARA ==========
-        this.cameraZoom = 1.5; // Nivel de zoom (ajustable)
+        this.cameraZoom = 2.5; // Nivel de zoom (ajustable)
         this.cameraLerpFactor = 0.12; // Suavizado de la cámara (0-1, más pequeño = más suave)
         // Posición actual de la cámara en coordenadas del mundo (se interpola hacia el jugador)
         this.cameraX = this.x;
@@ -240,12 +240,21 @@ class Player {
 
     // ========== ESTABLECER POSICIÓN EN CELDA ==========
     setGridPosition(row, col) {
-        this.x = col * this.gridSize + this.gridSize / 2;
-        this.y = row * this.gridSize + this.gridSize / 2;
+        // Calcular posición central de la celda
+        const newX = col * this.gridSize + this.gridSize / 2;
+        const newY = row * this.gridSize + this.gridSize / 2;
+        
+        // Actualizar posición del jugador
+        this.x = newX;
+        this.y = newY;
         
         // Actualizar también la posición de la cámara para evitar saltos
-        this.cameraX = this.x;
-        this.cameraY = this.y;
+        this.cameraX = newX;
+        this.cameraY = newY;
+        
+        // Resetear velocidad
+        this.dx = 0;
+        this.dy = 0;
     }
 }
 

@@ -43,54 +43,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const keys = {};
     const cooldowns = {};
+    let lastTeleportCell = null;
+    let teleportCooldownActive = false;
 
     // ========== MAPA DEL NIVEL 1 ==========
     const mazeMap = [
-        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-        "WP      W          W  T  W           W         W",
-        "W   W   WWWWW   WWWW  W  W   WWWWW   W   WWWW  W",
-        "W   L   W       W     W  W   W       W   W     W",
-        "W   W   W   WWWWW  W  WWWW   W   WWWWW   W  WWWW",
-        "W       W   W      W     W   W   W       W    V W",
-        "WWW  W  W   W   W  W  W  W   W   W   WWWWW  W T W",
-        "W    W      W   W  W  W  W   W   W        W  W  W",
-        "W   WWWWW   W   W  WWWW  W   W   W   WWW  W  WW W",
-        "W   W  V    W   W       W   W   W   W  W  W  W  L",
-        "W   W   WWWWWWWWW   W   W   W   W   W  W  W  W WW",
-        "W   L   W       W   W   W   W   W   W     W     W",
-        "W   WWWWWWWWWWWWWWWWWWW  W  W   W   WWW  WWW  W W",
-        "W   W       W      W  W      W  W   W       W    W",
-        "W   WWW  W  W   W  W  WW  W  WWWW   W   W  W  W W",
-        "W   W W  W  W   W  W   W  W       W  W  W  W  W W",
-        "W   W W  W  W   WWWWW  W  W   WWWWW  W  W  W  W W",
-        "W   W W  W  W   W   W  W  W   W      W  W  W  W W",
-        "W   W W  W  W   W  WW  W  W   W   WWWW  W  W  W W",
-        "W   W W  W  W   W   W  W  W   W   W     W  W  W W",
-        "W   W W  W  W   WWWWW  W  W   W   W  W  W  W  W W",
-        "W   W W  W  W   W   W     W   W   W  W  W  W  W W",
-        "W   W W  W  W   W  WW  WWWW   W   W  W  W  W  W W",
-        "W   W W  W  W   W   W  W      W   W  W     W  W W",
-        "W   W    W      W   W     W      W      W      W W",
-        "W   WWWW  WWWW  WWWW  WWWW  WWWW  WWWW  WWWW  W W",
-        "W   W        W      W      W      W        W   W W",
-        "W   W   WWWWWW   WWWW   WWWW   WWWW   WWW  W  W W",
-        "W   W   W        W      W      W      W     W  W W",
-        "W   W   W   WWWWW  WWWW  WWWW  WWWW  WWW  W W  W W",
-        "W       W      W      W      W      W      W    W W",
-        "W   WWWWW   WWWW   WWWW   WWWW   WWWW   WWWW  WW W",
-        "W   W         W      W      W      W             W",
-        "W   W   WWWWWWW  WWWW   WWWW   WWWW   WWWW  WW E W",
-        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WP     W          W  T  W           W         W",
+        "W  W   WWWWW   WWWW  W  W   WWWWW   W   WWWW  W",
+        "W  L   W       W     W  W   W       W   W     W",
+        "W  W   W   WWWWW  W  WWWW   W   WWWWW   W  WWWW",
+        "W      W   W      W    W   W   W       W    V W",
+        "WW  W W   W   W  W  W  W   W   W   WWWWW  W T W",
+        "W   W     W   W  W  W  W   W   W        W  W  W",
+        "W  WWWWW   W   W  WWWW  W   W   W  WWW  W  WW W",
+        "W  W  V    W   W      W   W   W   W  W  W  W LW",
+        "W  W   WWWWWWWW   W   W   W   W   W  W  W  W WW",
+        "W  L          W   W   W   W   W   W     W     W",
+        "W  WWWWWWWWWWWWWWWWWW  W  W   W   WWW  WWW  W W",
+        "W  W      W     W  W      W  W   W       W    W",
+        "W  WW  W  W   W  W  WW  W  WWWW   W   W  W  W W",
+        "W  W W  W     W  W   W  W       W  W  W  W  W W",
+        "W  W W  W  W   WWWW  W  W   WWWWW  W  W  W  W W",
+        "W  W W  W  W   W   W    W   W      W  W  W  W W",
+        "W  W W  W  W   W  WW    W   W   WWWW  W  W  W W",
+        "W  W W  W  W   W     W  W   W   W     W  W  W W",
+        "W  W W  W  W   WWWW  W  W   W   W  W  W  W  W W",
+        "W  W W  W  W   W        W   W   W  W  W  W  W W",
+        "W  W W  W  W   W  WW  WWW   W   W  W  W  W  W W",
+        "W  W   W  W   W   W  W      W   W  W     W  W W",
+        "W      W      W   W     W     W      W      W W",
+        "W  WWWW  WWWW  WWWW  WWW  WWWW  WWWW  WWWW  W W",
+        "W  W        W      W      W      W        W   W",
+        "W  W   WWWWWW   WWWW   WWWW   WWWW   WWW  W   W",
+        "W  W   W        W      W      W      W     W  W",
+        "W  W   W   WWWWW  WWWW  WWWW  WWWW  WWW  W W  W",
+        "W      W      W      W      W      W      W   W",
+        "W  WWWWW   WWWW   WWWW   WWWW   WWWW   WWWW  WW",
+        "W  W         W      W      W      W           W",
+        "W  W   WWWWWWW  WWWW   WWWW   WWWW   WWWW  W EW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
     ];
 
     const MAZE_ROWS = mazeMap.length;
     const MAZE_COLS = mazeMap[0].length;
     
+    // Verificar posiciones de teleportadores en el mapa
+    console.log('[MAP1] Verificando teleportadores...');
     const teleportGroups = {
-        'T': [{ row: 1, col: 17 }, { row: 6, col: 47 }],
-        'V': [{ row: 5, col: 47 }, { row: 9, col: 7 }],
-        'L': [{ row: 3, col: 4 }, { row: 9, col: 48 }, { row: 11, col: 4 }]
+        'T': [],
+        'V': [],
+        'L': []
     };
+    
+    for (let r = 0; r < MAZE_ROWS; r++) {
+        for (let c = 0; c < MAZE_COLS; c++) {
+            const cell = mazeMap[r][c];
+            if (teleportGroups[cell] !== undefined) {
+                teleportGroups[cell].push({ row: r, col: c });
+                console.log(`[MAP1] Encontrado ${cell} en (${r}, ${c})`);
+            }
+        }
+    }
+
+    console.log('[MAP1] Grupos de teleport:', teleportGroups);
 
     // ========== INPUTS ==========
     window.addEventListener('keydown', (e) => {
@@ -111,6 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========== FUNCIONES ==========
     function calculateSizes() {
         GRID_SIZE = GameBase.calculateSizes(canvas, MAZE_ROWS, MAZE_COLS);
+        console.log('[MAP1] GRID_SIZE calculado:', GRID_SIZE);
+        console.log('[MAP1] Canvas size:', canvas.width, 'x', canvas.height);
     }
     
     function resizeGame() {
@@ -154,11 +172,112 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function checkWinCondition() {
         const pos = player.getGridPosition();
-        if (mazeMap[pos.row][pos.col] === 'E') winGame();
+        if (pos.row >= 0 && pos.row < MAZE_ROWS && pos.col >= 0 && pos.col < MAZE_COLS) {
+            if (mazeMap[pos.row][pos.col] === 'E') winGame();
+        }
     }
     
     function checkTeleport() {
-        GameBase.checkTeleport(player, mazeMap, teleportGroups, cooldowns, TELEPORT_COOLDOWN, cooldownDisplay, cooldownTimer, GRID_SIZE);
+        const pos = player.getGridPosition();
+        
+        // Validar posición
+        if (pos.row < 0 || pos.row >= MAZE_ROWS || pos.col < 0 || pos.col >= MAZE_COLS) {
+            return;
+        }
+        
+        const cellType = mazeMap[pos.row][pos.col];
+        const cellKey = `${pos.row},${pos.col}`;
+        const currentTime = Date.now();
+
+        // Actualizar display de cooldown
+        if (teleportCooldownActive) {
+            let stillCoolingDown = false;
+            let minRemaining = Infinity;
+            
+            for (const key in cooldowns) {
+                if (cooldowns[key] > currentTime) {
+                    stillCoolingDown = true;
+                    const remaining = cooldowns[key] - currentTime;
+                    if (remaining < minRemaining) {
+                        minRemaining = remaining;
+                    }
+                }
+            }
+            
+            if (stillCoolingDown && cooldownDisplay && cooldownTimer) {
+                const remainingSeconds = Math.ceil(minRemaining / 1000);
+                cooldownTimer.textContent = remainingSeconds;
+                cooldownDisplay.style.display = 'block';
+            } else {
+                if (cooldownDisplay) cooldownDisplay.style.display = 'none';
+                teleportCooldownActive = false;
+            }
+        }
+
+        // Si no estamos en un teleporter, limpiar el registro
+        if (!teleportGroups[cellType] || teleportGroups[cellType].length === 0) {
+            lastTeleportCell = null;
+            return;
+        }
+
+        // Si ya estamos sobre este teleporter, no hacer nada (evita loop)
+        if (lastTeleportCell === cellKey) {
+            return;
+        }
+
+        // Verificar si hay cooldown activo para este teleporter
+        if (cooldowns[cellKey] && cooldowns[cellKey] > currentTime) {
+            return;
+        }
+
+        const group = teleportGroups[cellType];
+        if (group.length < 2) {
+            console.warn(`[MAP1] Grupo ${cellType} tiene menos de 2 teleporters`);
+            return;
+        }
+
+        // Encontrar teleporter actual en el grupo
+        const currentTeleport = group.find(tp => tp.row === pos.row && tp.col === pos.col);
+        
+        if (!currentTeleport) {
+            console.warn(`[MAP1] No se encontró teleporter actual en grupo ${cellType}`);
+            return;
+        }
+
+        // Obtener teleporters de destino (todos menos el actual)
+        const possibleTargets = group.filter(tp => tp.row !== pos.row || tp.col !== pos.col);
+
+        if (possibleTargets.length === 0) {
+            console.warn(`[MAP1] No hay destinos disponibles para ${cellType}`);
+            return;
+        }
+
+        // Elegir destino aleatorio
+        const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+        
+        console.log(`[MAP1] Teleportando ${cellType}: (${pos.row},${pos.col}) -> (${targetTeleport.row},${targetTeleport.col})`);
+        
+        // Aplicar cooldown a TODO el grupo
+        group.forEach(tp => {
+            const key = `${tp.row},${tp.col}`;
+            cooldowns[key] = currentTime + TELEPORT_COOLDOWN;
+        });
+        
+        teleportCooldownActive = true;
+        
+        // Mostrar cooldown
+        if (cooldownDisplay && cooldownTimer) {
+            cooldownDisplay.style.display = 'block';
+            cooldownTimer.textContent = Math.ceil(TELEPORT_COOLDOWN / 1000);
+        }
+
+        // Teletransportar al centro de la celda destino
+        player.setGridPosition(targetTeleport.row, targetTeleport.col);
+        
+        // Marcar este teleporter como el último usado
+        lastTeleportCell = `${targetTeleport.row},${targetTeleport.col}`;
+        
+        console.log(`[MAP1] Nueva posición del jugador: (${player.x}, ${player.y})`);
     }
 
     function pauseGame() {
@@ -230,9 +349,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========== INICIO ==========
     function startGame() {
         const start = GameBase.findPlayerStart(mazeMap);
+        console.log('[MAP1] Posición inicial:', start);
+        
         calculateSizes();
         player = new Player(0, 0, GRID_SIZE);
         player.setGridPosition(start.row, start.col);
+        /*
+        // Ajustar zoom para ver TODO el mapa con margen
+        const availableWidth = window.innerWidth;
+        const availableHeight = window.innerHeight - 70;
+        const mapPixelWidth = canvas.width;
+        const mapPixelHeight = canvas.height;
+        
+        console.log('[MAP1] Available space:', availableWidth, 'x', availableHeight);
+        console.log('[MAP1] Map size:', mapPixelWidth, 'x', mapPixelHeight);
+        
+        if (mapPixelWidth > 0 && mapPixelHeight > 0) {
+            // Calcular zoom para que quepa todo el mapa con 10% de margen
+            const zoomX = (availableWidth * 0.9) / mapPixelWidth;
+            const zoomY = (availableHeight * 0.9) / mapPixelHeight;
+            const fitZoom = Math.min(zoomX, zoomY);
+            
+            // Asegurar un zoom mínimo razonable
+            const minZoom = 0.5;
+            const maxZoom = 3.0;
+            
+            player.cameraZoom = Math.max(minZoom, Math.min(maxZoom, fitZoom));
+            console.log('[MAP1] Zoom ajustado a:', player.cameraZoom);
+        }
+        */
+        
         window.addEventListener('resize', resizeGame);
         
         setTimeout(() => loadingOverlay.classList.add('hidden'), 1000);

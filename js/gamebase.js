@@ -189,66 +189,11 @@ class GameBase {
         ctx.globalAlpha = 1.0;
     }
 
-    // ========== TELETRANSPORTE ==========
+    // ========== TELETRANSPORTE (DEPRECATED - Usar implementación local) ==========
+    // Esta función se mantiene por compatibilidad pero se recomienda usar
+    // implementaciones locales en cada mapa para mejor control
     static checkTeleport(player, map, teleportGroups, cooldowns, teleportCooldown, cooldownDisplay, cooldownTimer, gridSize) {
-        const pos = player.getGridPosition();
-        const cellType = map[pos.row][pos.col];
-        const cooldownKey = `${pos.row},${pos.col}`;
-
-        if (!teleportGroups[cellType]) {
-            if (cooldownDisplay && cooldownDisplay.style.display === 'block') {
-                const keysArr = Object.keys(cooldowns);
-                if (keysArr.length > 0) {
-                    const currentTime = Date.now();
-                    const remainingCooldown = Math.ceil((cooldowns[keysArr[0]] - currentTime) / 1000);
-                    if (remainingCooldown <= 0) {
-                        cooldownDisplay.style.display = 'none';
-                    } else {
-                        cooldownTimer.textContent = remainingCooldown;
-                    }
-                } else {
-                    cooldownDisplay.style.display = 'none';
-                }
-            }
-            return;
-        }
-
-        const currentTime = Date.now();
-        
-        if (cooldowns[cooldownKey] && cooldowns[cooldownKey] > currentTime) {
-            const remainingCooldown = Math.ceil((cooldowns[cooldownKey] - currentTime) / 1000);
-            cooldownTimer.textContent = remainingCooldown;
-            cooldownDisplay.style.display = 'block';
-            return;
-        }
-
-        const group = teleportGroups[cellType];
-        if (group.length < 2) return;
-
-        const currentTeleport = group.find(tp => tp.row === pos.row && tp.col === pos.col);
-        
-        if (currentTeleport) {
-            const possibleTargets = group.filter(tp => tp.row !== pos.row || tp.col !== pos.col);
-
-            if (possibleTargets.length > 0) {
-                const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-                
-                group.forEach(tp => {
-                    const key = `${tp.row},${tp.col}`;
-                    cooldowns[key] = currentTime + teleportCooldown;
-                });
-                
-                cooldownDisplay.style.display = 'block';
-                cooldownTimer.textContent = Math.ceil(teleportCooldown / 1000);
-
-                const centerX = (targetTeleport.col + 0.5) * gridSize;
-                const centerY = (targetTeleport.row + 0.5) * gridSize;
-                player.x = centerX;
-                player.y = centerY;
-                player.dx = 0;
-                player.dy = 0;
-            }
-        }
+        console.warn('[GameBase] checkTeleport está deprecated. Usar implementación local en cada mapa.');
     }
 
     // ========== PAUSA ==========
@@ -340,8 +285,8 @@ class GameBase {
             const mapPixelWidth = canvas.width;
             const mapPixelHeight = canvas.height;
             if (mapPixelWidth > 0 && mapPixelHeight > 0) {
-                const fitZoom = Math.min(availableWidth / mapPixelWidth, availableHeight / mapPixelHeight);
-                const minZoom = 2.5;
+                const fitZoom = Math.min(availableWidth / mapPixelWidth, availableHeight / mapPixelHeight) * 0.95;
+                const minZoom = 1.0;
                 const desiredZoom = Math.max(minZoom, fitZoom);
                 if (desiredZoom > 0) {
                     player.cameraZoom = desiredZoom;
