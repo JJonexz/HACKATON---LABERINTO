@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Selección de Nivel - El Último Turista</title>
+    <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
 </head>
@@ -16,7 +17,6 @@
             <div id="stats-container">
                 <div id="progress-info">
                     NIVELES COMPLETADOS: <span id="levels-completed">0</span>/3
-                    <button id="reset-progress" style="margin-left: 20px; background: #4a0101; color: #ff6666; border: 1px solid #ff0000; padding: 5px 10px; cursor: pointer; font-family: inherit; border-radius: 4px;">Reiniciar Progreso</button>
                 </div>
             </div>
         </div>
@@ -29,10 +29,21 @@
             <div class="instruction-box">
                 <h2>INSTRUCCIONES</h2>
                 <p>Muévete con <strong>WASD</strong> o <strong>Flechas</strong></p>
-                <p>Acércate a una puerta para entrar al nivel</p>
-                <p>Completa cada nivel para desbloquear el siguiente</p>
-                <p class="warning">¡Las puertas brillan en verde cuando completas el nivel!</p>
+                <p>Acércate a la puerta para entrar a un nivel aleatorio</p>
+                <p>Los niveles jugados no se repiten hasta completar todos</p>
+                <p>Presiona <strong>ESC</strong> para abrir el menú</p>
+                <p class="warning">¡Completa los 3 niveles para escapar definitivamente!</p>
                 <button id="start-button" class="main-button">COMENZAR</button>
+            </div>
+        </div>
+
+        <!-- Menú de Pausa -->
+        <div id="pause-overlay" class="hidden">
+            <div id="pause-menu" class="hidden">
+                <h2>MENÚ</h2>
+                <button id="resume-button" class="menu-btn">Continuar</button>
+                <button id="reset-run-button" class="menu-btn danger-btn">Resetear Run</button>
+                <button id="exit-menu-button" class="menu-btn">Salir al Menu</button>
             </div>
         </div>
 
@@ -45,6 +56,7 @@
 
     <!-- Cargar player.js ANTES de main.js -->
     <script src="js/player.js"></script>
+    <script src="js/gameBase.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

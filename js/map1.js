@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ========== CONFIGURACIÓN INICIAL ==========
+    // ========== ELEMENTOS DOM ==========
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const timerElement = document.getElementById('timer');
@@ -11,51 +11,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageStats = document.getElementById('message-stats');
     const retryButton = document.getElementById('retry-button');
     const loadingOverlay = document.getElementById('loading-overlay');
-    
-    // Elementos de pausa
     const pauseOverlay = document.getElementById('pause-overlay');
     const pauseMenu = document.getElementById('pause-menu');
     const resumeButton = document.getElementById('resume-button');
     const menuButton = document.getElementById('menu-button');
     const pauseRestartButton = document.getElementById('pause-restart-button');
     const loseRestartButton = document.getElementById('lose-restart-button');
-    
-    // Configuración de la cuadrícula
-    let GRID_SIZE; 
-
-    let gameActive = true;
-    let isPaused = false;
-    let timerInterval;
-    let timeLeft = 60;
-    let animationId;
-    
-    // Delta time
-    let lastTime = 0;
-    
-    // FPS counter
-    let frameCount = 0;
-    let lastFpsUpdate = 0;
-    let currentFps = 60;
-    
-    let player = null;
-    let playerStartRow = 0;
-    let playerStartCol = 0;
-    
-    // Cooldown de teletransportes
-    const teleportCooldown = 5000; // 5 segundos
-    const cooldowns = {};
-    let activeCooldown = false;
     const cooldownDisplay = document.getElementById('teleport-cooldown');
     const cooldownTimer = document.getElementById('cooldown-timer');
 
-    // ========== MAPA OPTIMIZADO 35x50 CON CARRILES AMPLIOS ==========
+    // ========== CONFIGURACIÓN DEL NIVEL ==========
+    const LEVEL_ID = 1;
+    const TIME_LIMIT = 60;
+    const TELEPORT_COOLDOWN = 5000;
+    
+    let GRID_SIZE;
+    let player = null;
+    let timerInterval;
+    let timeLeft = TIME_LIMIT;
+    
+    // Estado del juego
+    const gameState = {
+        gameActive: true,
+        isPaused: false,
+        animationId: null,
+        lastTime: 0,
+        frameCount: 0,
+        lastFpsUpdate: 0,
+        currentFps: 60
+    };
+
+    const keys = {};
+    const cooldowns = {};
+
+    // ========== MAPA DEL NIVEL 1 ==========
     const mazeMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
         "WP      W          W  T  W           W         W",
         "W   W   WWWWW   WWWW  W  W   WWWWW   W   WWWW  W",
         "W   L   W       W     W  W   W       W   W     W",
         "W   W   W   WWWWW  W  WWWW   W   WWWWW   W  WWWW",
-        "W       W   W      W     W   W   W       W    V W", 
+        "W       W   W      W     W   W   W       W    V W",
         "WWW  W  W   W   W  W  W  W   W   W   WWWWW  W T W",
         "W    W      W   W  W  W  W   W   W        W  W  W",
         "W   WWWWW   W   W  WWWW  W   W   W   WWW  W  WW W",
@@ -90,124 +86,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAZE_ROWS = mazeMap.length;
     const MAZE_COLS = mazeMap[0].length;
     
-    // Coordenadas de teletransportadores ajustadas
     const teleportGroups = {
-        'T': [
-            { row: 1, col: 17 },
-            { row: 6, col: 47 }
-        ],
-        'V': [
-            { row: 5, col: 47 }, 
-            { row: 9, col: 7 } 
-        ],
-        'L': [
-            { row: 3, col: 4 },
-            { row: 9, col: 48 },
-            { row: 11, col: 4 }
-        ]
+        'T': [{ row: 1, col: 17 }, { row: 6, col: 47 }],
+        'V': [{ row: 5, col: 47 }, { row: 9, col: 7 }],
+        'L': [{ row: 3, col: 4 }, { row: 9, col: 48 }, { row: 11, col: 4 }]
     };
 
-    // Gestión de inputs
-    const keys = {};
-
+    // ========== INPUTS ==========
     window.addEventListener('keydown', (e) => {
-        if (!gameActive) return;
-        
+        if (!gameState.gameActive) return;
         if (e.key === 'Escape') {
-            if (isPaused) {
-                resumeGame();
-            } else {
-                pauseGame();
-            }
+            gameState.isPaused ? resumeGame() : pauseGame();
             return;
         }
-        
-        if (isPaused) return;
-        
+        if (gameState.isPaused) return;
         keys[e.key] = true;
-        
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
             e.preventDefault();
         }
     });
 
-    window.addEventListener('keyup', (e) => {
-        keys[e.key] = false;
-    });
+    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
-    // ========== FUNCIONES DE REDIMENSIONAMIENTO PARA PANTALLA COMPLETA ==========
+    // ========== FUNCIONES ==========
     function calculateSizes() {
-        const availableHeight = window.innerHeight - 70;
-        const availableWidth = window.innerWidth;
-        
-        const maxGridWidth = availableWidth / MAZE_COLS;
-        const maxGridHeight = availableHeight / MAZE_ROWS;
-        
-        GRID_SIZE = Math.floor(Math.min(maxGridWidth, maxGridHeight));
-        
-        canvas.width = MAZE_COLS * GRID_SIZE;
-        canvas.height = MAZE_ROWS * GRID_SIZE;
+        GRID_SIZE = GameBase.calculateSizes(canvas, MAZE_ROWS, MAZE_COLS);
     }
     
     function resizeGame() {
-        const oldGridSize = GRID_SIZE; 
-        calculateSizes(); 
-        
-        if (player && oldGridSize) {
-            player.updateGridSize(GRID_SIZE);
-        }
-    }
-
-    // ========== INICIALIZACIÓN ==========
-    function initializeGame() {
-        for (let r = 0; r < MAZE_ROWS; r++) {
-            for (let c = 0; c < MAZE_COLS; c++) {
-                if (mazeMap[r][c] === 'P') {
-                    playerStartCol = c;
-                    playerStartRow = r;
-                    return;
-                }
-            }
-        }
-    }
-    
-    // ========== FUNCIONES DE COLISIÓN ==========
-    function isWall(x, y) {
-        const c = Math.floor(x / GRID_SIZE);
-        const r = Math.floor(y / GRID_SIZE);
-
-        if (r < 0 || r >= MAZE_ROWS || c < 0 || c >= MAZE_COLS) {
-            return true;
-        }
-        return mazeMap[r][c] === 'W';
+        const oldGridSize = GRID_SIZE;
+        calculateSizes();
+        if (player && oldGridSize) player.updateGridSize(GRID_SIZE);
     }
 
     function canMoveTo(x, y, radius) {
-        const checkPoints = [
-            [x + radius, y],
-            [x - radius, y],
-            [x, y + radius],
-            [x, y - radius],
-            [x, y]
-        ];
-
-        for (const [px, py] of checkPoints) {
-            if (isWall(px, py)) {
-                return false;
-            }
-        }
-        return true;
+        return GameBase.canMoveTo(x, y, radius, mazeMap, GRID_SIZE);
     }
 
-    // ========== FUNCIONES DE DIBUJO OPTIMIZADAS ==========
-    function clearCanvas() {
-        ctx.fillStyle = '#000000'; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    
     function drawMaze() {
         const currentTime = Date.now();
-        
         for (let r = 0; r < MAZE_ROWS; r++) {
             for (let c = 0; c < MAZE_COLS; c++) {
                 const cell = mazeMap[r][c];
@@ -216,86 +133,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 switch (cell) {
                     case 'W':
-                        ctx.fillStyle = '#330000';
-                        ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
-                        ctx.strokeStyle = '#ff1a1a';
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(x, y, GRID_SIZE, GRID_SIZE);
+                        GameBase.drawWall(ctx, x, y, GRID_SIZE, '#330000', '#ff1a1a');
                         break;
-                        
                     case 'E':
-                        const exitPulse = Math.sin(currentTime * 0.003) * 0.3 + 0.7;
-                        ctx.fillStyle = `rgba(0, 255, 0, ${exitPulse})`;
-                        ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
-                        
-                        ctx.font = `bold ${GRID_SIZE * 0.7}px Arial`;
-                        ctx.fillStyle = '#000000';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('E', x + GRID_SIZE / 2, y + GRID_SIZE / 2);
-                        
-                        ctx.shadowBlur = 20;
-                        ctx.shadowColor = '#00FF00';
-                        ctx.strokeStyle = '#00FF00';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(x + 2, y + 2, GRID_SIZE - 4, GRID_SIZE - 4);
-                        ctx.shadowBlur = 0;
+                        GameBase.drawExit(ctx, x, y, GRID_SIZE, currentTime);
                         break;
-                        
                     case 'T':
                     case 'V':
                     case 'L':
-                        let fillColor, strokeColor, icon;
-                        switch(cell) {
-                            case 'T':
-                                fillColor = 'rgba(0, 100, 255, 0.6)';
-                                strokeColor = '#00FFFF';
-                                icon = 'T';
-                                break;
-                            case 'V':
-                                fillColor = 'rgba(0, 255, 100, 0.6)';
-                                strokeColor = '#00FF00';
-                                icon = 'V';
-                                break;
-                            case 'L':
-                                fillColor = 'rgba(200, 0, 255, 0.6)';
-                                strokeColor = '#FF00FF';
-                                icon = 'L';
-                                break;
-                        }
-                        
-                        const cooldownKey = `${r},${c}`;
-                        let isCoolingDown = cooldowns[cooldownKey] && cooldowns[cooldownKey] > currentTime;
-                        
-                        if (isCoolingDown) {
-                            ctx.fillStyle = 'rgba(50, 50, 50, 0.8)'; 
-                            ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
-                        } else {
-                            ctx.fillStyle = fillColor;
-                            ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
-                            
-                            const pulse = Math.sin(currentTime * 0.005) * 0.5 + 0.5;
-                            ctx.shadowBlur = 15 * pulse;
-                            ctx.shadowColor = strokeColor;
-                        }
-
-                        ctx.strokeStyle = strokeColor;
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.arc(x + GRID_SIZE / 2, y + GRID_SIZE / 2, GRID_SIZE / 3.5, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.shadowBlur = 0;
-                        
-                        ctx.font = `bold ${GRID_SIZE * 0.55}px Arial`;
-                        ctx.fillStyle = isCoolingDown ? '#888888' : strokeColor;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(icon, x + GRID_SIZE / 2, y + GRID_SIZE / 2);
+                        GameBase.drawTeleporter(ctx, x, y, GRID_SIZE, cell, `${r},${c}`, cooldowns, currentTime);
                         break;
-                        
-                    case 'P':
-                    case ' ':
-                        ctx.fillStyle = '#000000'; 
+                    default:
+                        ctx.fillStyle = '#000000';
                         ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
                         break;
                 }
@@ -303,286 +152,102 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ========== SISTEMA DE LUZ OPTIMIZADO ==========
-    function drawLighting() {
-        const lightCanvas = document.createElement('canvas');
-        lightCanvas.width = canvas.width;
-        lightCanvas.height = canvas.height;
-        const lightCtx = lightCanvas.getContext('2d');
-        
-        lightCtx.fillStyle = 'rgba(0, 0, 0, 1)';
-        lightCtx.fillRect(0, 0, lightCanvas.width, lightCanvas.height);
-        
-        lightCtx.globalCompositeOperation = 'destination-out';
-        
-        const adjustedLightRadius = player.lightRadius * 1.3;
-        
-        const gradient = lightCtx.createRadialGradient(
-            player.x, player.y, 0,
-            player.x, player.y, adjustedLightRadius
-        );
-        
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
-        gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.95)');
-        gradient.addColorStop(0.65, 'rgba(0, 0, 0, 0.7)');
-        gradient.addColorStop(0.85, 'rgba(0, 0, 0, 0.4)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        
-        lightCtx.fillStyle = gradient;
-        lightCtx.beginPath();
-        lightCtx.arc(player.x, player.y, adjustedLightRadius, 0, Math.PI * 2);
-        lightCtx.fill();
-        
-        ctx.globalAlpha = 0.90;
-        ctx.drawImage(lightCanvas, 0, 0);
-        ctx.globalAlpha = 1.0;
-    }
-    
-    // ========== LÓGICA DE JUEGO ==========
     function checkWinCondition() {
         const pos = player.getGridPosition();
-        if (mazeMap[pos.row][pos.col] === 'E') {
-            winGame();
-        }
+        if (mazeMap[pos.row][pos.col] === 'E') winGame();
     }
     
     function checkTeleport() {
-        const pos = player.getGridPosition();
-        const cellType = mazeMap[pos.row][pos.col];
-        const cooldownKey = `${pos.row},${pos.col}`;
-
-        // Si no es un tipo de teletransportador válido, salimos
-        if (!teleportGroups[cellType]) {
-            if (cooldownDisplay.style.display === 'block') {
-                const currentTime = Date.now();
-                const remainingCooldown = Math.ceil((cooldowns[Object.keys(cooldowns)[0]] - currentTime) / 1000);
-                if (remainingCooldown <= 0) {
-                    cooldownDisplay.style.display = 'none';
-                    activeCooldown = false;
-                } else {
-                    cooldownTimer.textContent = remainingCooldown;
-                }
-            }
-            return;
-        }
-
-        const currentTime = Date.now();
-        
-        // Verificamos el cooldown solo del teleportador actual
-        if (cooldowns[cooldownKey] && cooldowns[cooldownKey] > currentTime) {
-            const remainingCooldown = Math.ceil((cooldowns[cooldownKey] - currentTime) / 1000);
-            cooldownTimer.textContent = remainingCooldown;
-            cooldownDisplay.style.display = 'block';
-            return;
-        }
-
-        const group = teleportGroups[cellType];
-        if (group.length < 2) return;
-
-        // Encontramos el teleportador actual
-        const currentTeleport = group.find(tp => tp.row === pos.row && tp.col === pos.col);
-        
-        if (currentTeleport) {
-            // Filtramos los posibles destinos (excluyendo el actual)
-            const possibleTargets = group.filter(tp => tp.row !== pos.row || tp.col !== pos.col);
-
-            if (possibleTargets.length > 0) {
-                // Seleccionamos un destino aleatorio
-                const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-                
-                // Aplicamos cooldown a TODOS los teleportadores del grupo
-                group.forEach(tp => {
-                    const key = `${tp.row},${tp.col}`;
-                    cooldowns[key] = currentTime + teleportCooldown;
-                });
-                activeCooldown = true;
-                cooldownDisplay.style.display = 'block';
-                cooldownTimer.textContent = Math.ceil(teleportCooldown / 1000);
-
-                // Teleportamos al jugador centrado en la celda de destino
-                const centerX = (targetTeleport.col + 0.5) * GRID_SIZE;
-                const centerY = (targetTeleport.row + 0.5) * GRID_SIZE;
-                player.x = centerX;
-                player.y = centerY;
-                player.dx = 0;
-                player.dy = 0;
-            }
-        }
+        GameBase.checkTeleport(player, mazeMap, teleportGroups, cooldowns, TELEPORT_COOLDOWN, cooldownDisplay, cooldownTimer, GRID_SIZE);
     }
 
-    // ========== FUNCIONES DE PAUSA ==========
     function pauseGame() {
-        if (isPaused || !gameActive) return;
-        isPaused = true;
-
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
-        }
-
-        pauseOverlay.classList.remove('hidden');
-        pauseMenu.classList.remove('hidden');
-        canvas.classList.add('paused');
+        GameBase.pauseGame(gameState, canvas, pauseOverlay, pauseMenu);
     }
 
     function resumeGame() {
-        if (!isPaused) return;
-        isPaused = false;
-
-        pauseOverlay.classList.add('hidden');
-        pauseMenu.classList.add('hidden');
-        canvas.classList.remove('paused');
-
-        lastTime = 0;
-        
-        if (!animationId) {
-            animationId = requestAnimationFrame(gameLoop);
-        }
-    }
-
-    // ========== MENSAJES ==========
-    retryButton.addEventListener('click', () => {
-        window.location.href = 'main.html';
-    });
-
-    const restartAction = () => {
-        window.location.reload();
-    };
-
-    if (pauseRestartButton) {
-        pauseRestartButton.addEventListener('click', restartAction);
-    }
-    if (loseRestartButton) {
-        loseRestartButton.addEventListener('click', restartAction);
-    }
-
-    menuButton.addEventListener('click', () => {
-        window.location.href = 'main.html';
-    });
-
-    resumeButton.addEventListener('click', () => {
-        resumeGame();
-    });
-
-    function showMessage(title, text, stats = '') {
-        messageTitle.textContent = title;
-        messageText.textContent = text;
-        messageStats.textContent = stats;
-        messageOverlay.classList.remove('hidden');
+        GameBase.resumeGame(gameState, canvas, pauseOverlay, pauseMenu, gameLoop);
     }
 
     function winGame() {
-        gameActive = false;
+        gameState.gameActive = false;
         clearInterval(timerInterval);
-        const timeUsed = 60 - timeLeft;
-        
-        // Guardar progreso - NIVEL 1
-        let progress = JSON.parse(localStorage.getItem('gameProgress') || '{"completed":[]}');
-        if (!Array.isArray(progress.completed)) {
-            progress.completed = [];
-        }
-        
-        if (!progress.completed.includes(1)) {
-            progress.completed.push(1);
-            progress.completed.sort((a, b) => a - b);
-            localStorage.setItem('gameProgress', JSON.stringify(progress));
-        }
-        
-        showMessage(
-            "¡ESCAPASTE! ✓", 
+        const timeUsed = TIME_LIMIT - timeLeft;
+        GameBase.saveProgress(LEVEL_ID);
+        GameBase.showMessage(messageOverlay, messageTitle, messageText, messageStats,
+            "¡ESCAPASTE! ✓",
             "Has encontrado la salida del laberinto...",
-            `Tiempo usado: ${timeUsed} segundos | FPS promedio: ${currentFps}`
+            `Tiempo usado: ${timeUsed}s | FPS: ${gameState.currentFps}`
         );
-        
         retryButton.textContent = "Volver al Menú";
     }
 
     function loseGame() {
-        gameActive = false;
+        gameState.gameActive = false;
         clearInterval(timerInterval);
-        showMessage(
-            "TIEMPO AGOTADO ✗", 
+        GameBase.showMessage(messageOverlay, messageTitle, messageText, messageStats,
+            "TIEMPO AGOTADO ✗",
             "El laberinto te ha consumido. No hay escapatoria.",
             "Intenta ser más rápido la próxima vez..."
         );
-        
         retryButton.textContent = "Volver al Menú";
     }
 
+    // ========== EVENT LISTENERS ==========
+    retryButton.addEventListener('click', () => window.location.href = 'main.html');
+    if (pauseRestartButton) pauseRestartButton.addEventListener('click', () => window.location.reload());
+    if (loseRestartButton) loseRestartButton.addEventListener('click', () => window.location.reload());
+    if (resumeButton) resumeButton.addEventListener('click', resumeGame);
+    if (menuButton) menuButton.addEventListener('click', () => window.location.href = 'main.html');
+
     // ========== BUCLE PRINCIPAL ==========
     function gameLoop(timestamp) {
-        if (!gameActive) return;
-        
-        if (isPaused) {
-            animationId = requestAnimationFrame(gameLoop);
+        if (!gameState.gameActive) return;
+        if (gameState.isPaused) {
+            gameState.animationId = requestAnimationFrame(gameLoop);
             return;
         }
         
-        if (lastTime === 0) {
-            lastTime = timestamp;
-        }
-        const deltaTime = timestamp - lastTime;
-        lastTime = timestamp;
+        if (gameState.lastTime === 0) gameState.lastTime = timestamp;
+        const deltaTime = timestamp - gameState.lastTime;
+        gameState.lastTime = timestamp;
 
-        frameCount++;
-        if (timestamp - lastFpsUpdate > 1000) {
-            currentFps = Math.round(frameCount * 1000 / (timestamp - lastFpsUpdate));
-            fpsElement.textContent = currentFps;
-            frameCount = 0;
-            lastFpsUpdate = timestamp;
-        }
-
+        GameBase.updateFPS(gameState, timestamp, fpsElement);
         player.update(keys, canMoveTo, deltaTime);
-        
         checkWinCondition();
         checkTeleport();
 
-        clearCanvas();
-        // Aplicar la transformación de la cámara
+        GameBase.clearCanvas(ctx, canvas);
         player.applyCamera(ctx, canvas.width, canvas.height);
-        
-        // Dibujar todo el juego con la cámara aplicada
         drawMaze();
         player.draw(ctx);
-        drawLighting();
-        
-        // Restaurar el contexto de la cámara
+        GameBase.drawLighting(ctx, player, canvas, 0.90);
         player.restoreCamera(ctx);
         
-        animationId = requestAnimationFrame(gameLoop);
+        gameState.animationId = requestAnimationFrame(gameLoop);
     }
 
-    // ========== INICIO DEL JUEGO ==========
+    // ========== INICIO ==========
     function startGame() {
-        initializeGame();
+        const start = GameBase.findPlayerStart(mazeMap);
         calculateSizes();
-        
         player = new Player(0, 0, GRID_SIZE);
-        player.setGridPosition(playerStartRow, playerStartCol);
-        
+        player.setGridPosition(start.row, start.col);
         window.addEventListener('resize', resizeGame);
         
-        setTimeout(() => {
-            loadingOverlay.classList.add('hidden');
-        }, 1000);
+        setTimeout(() => loadingOverlay.classList.add('hidden'), 1000);
         
         timerInterval = setInterval(() => {
-            if (!gameActive || isPaused) {
-                return;
-            }
+            if (!gameState.gameActive || gameState.isPaused) return;
             timeLeft--;
             timerElement.textContent = timeLeft;
-
-            if (timeLeft <= 0) {
-                loseGame();
-            }
+            if (timeLeft <= 0) loseGame();
         }, 1000);
         
-        lastTime = 0;
-        lastFpsUpdate = performance.now();
-        animationId = requestAnimationFrame(gameLoop);
+        gameState.lastTime = 0;
+        gameState.lastFpsUpdate = performance.now();
+        gameState.animationId = requestAnimationFrame(gameLoop);
     }
 
     startGame();
-
 });

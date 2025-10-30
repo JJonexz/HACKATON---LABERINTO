@@ -1,8 +1,13 @@
+/* ========================================
+   MAIN.CSS - Estilos para selector de niveles
+   Usa variables de base.css
+   ======================================== */
+
 /* Estilo general del cuerpo */
 body {
-    font-family: 'Courier New', monospace;
-    background: radial-gradient(circle at center, #190000 0%, #090000 50%, #000000 100%);
-    color: #ff1a1a;
+    font-family: var(--font-main);
+    background: radial-gradient(circle at center, var(--color-dark) 0%, var(--color-dark-alt) 50%, var(--color-black) 100%);
+    color: var(--color-primary);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -10,9 +15,7 @@ body {
     min-height: 100vh;
     margin: 0;
     overflow: hidden;
-    text-shadow:
-        0 0 10px #ff0000,
-        0 0 25px #ff0000;
+    text-shadow: var(--shadow-red);
 }
 
 .game-container {
@@ -64,6 +67,13 @@ body {
     align-items: center;
 }
 
+#progress-info {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #00FF00;
+    text-shadow: 0 0 10px #00FF00;
+}
+
 #run-info {
     font-size: 1.3rem;
     font-weight: bold;
@@ -81,6 +91,12 @@ body {
         0 0 60px rgba(255, 0, 0, 0.3),
         inset 0 0 20px rgba(0, 0, 0, 0.5);
     background: #000000;
+    transition: filter 0.3s ease;
+}
+
+/* Canvas pausado */
+canvas.paused {
+    filter: blur(3px) brightness(0.7);
 }
 
 /* Clase ocultar */
@@ -190,6 +206,84 @@ body {
     transform: scale(1.05);
 }
 
+/* ========== MENÚ DE PAUSA ========== */
+#pause-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 150;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+#pause-menu {
+    background: rgba(25, 0, 0, 0.98);
+    border: 3px solid #ad0000;
+    border-radius: 15px;
+    padding: 40px 60px;
+    text-align: center;
+    box-shadow: 
+        0 0 60px #ff0000,
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.3s ease;
+    min-width: 350px;
+}
+
+#pause-menu h2 {
+    font-size: 2.5rem;
+    margin: 0 0 30px 0;
+    color: #ff1a1a;
+    text-shadow: 0 0 20px #ff0000;
+    letter-spacing: 4px;
+}
+
+.menu-btn {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #b44400 0%, #e77018 100%);
+    color: #fff;
+    padding: 15px 40px;
+    margin: 15px 0;
+    border: 2px solid #ad0000;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 0 15px rgba(180, 68, 0, 0.3);
+}
+
+.menu-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(180, 68, 0, 0.9);
+    background: linear-gradient(135deg, #e77018 0%, #ff8c3a 100%);
+}
+
+.menu-btn:active {
+    transform: scale(1.02);
+}
+
+/* Botón de peligro (Resetear Run) */
+.menu-btn.danger-btn {
+    background: linear-gradient(135deg, #8b0000 0%, #cc0000 100%);
+    border-color: #ff0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
+
+.menu-btn.danger-btn:hover {
+    background: linear-gradient(135deg, #cc0000 0%, #ff0000 100%);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
+}
+
 /* Pantalla de carga */
 #loading-overlay {
     position: fixed;
@@ -233,6 +327,7 @@ body {
         font-size: 1.2rem;
     }
     
+    #progress-info,
     #run-info {
         font-size: 1rem;
     }
@@ -253,5 +348,19 @@ body {
     .main-button {
         padding: 15px 40px;
         font-size: 1.2rem;
+    }
+
+    #pause-menu {
+        padding: 30px 40px;
+        min-width: 280px;
+    }
+
+    #pause-menu h2 {
+        font-size: 2rem;
+    }
+
+    .menu-btn {
+        padding: 12px 30px;
+        font-size: 1rem;
     }
 }
