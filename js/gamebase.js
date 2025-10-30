@@ -112,77 +112,98 @@ class GameBase {
         ctx.shadowBlur = 0;
     }
 
+    static teleporterImage = null;
+
     static drawTeleporter(ctx, x, y, gridSize, cellType, cooldownKey, cooldowns, currentTime) {
-        let fillColor, strokeColor, icon;
+        // Cargar la imagen de alcantarilla si aún no está cargada
+        if (!GameBase.teleporterImage) {
+            GameBase.teleporterImage = new Image();
+            GameBase.teleporterImage.src = 'sprites/map/PNG/sprite_alcantarilla.png';
+            
+            // Manejar errores de carga
+            GameBase.teleporterImage.onerror = () => {
+                console.error('[GameBase] Error al cargar sprite_alcantarilla.png - usando respaldo');
+                GameBase.teleporterImage.hadError = true;
+            };
+        }
+
+        let strokeColor;
         switch(cellType) {
-            case 'T':
-                fillColor = 'rgba(0, 100, 255, 0.6)';
-                strokeColor = '#00FFFF';
-                icon = 'T';
-                break;
-            case 'V':
-                fillColor = 'rgba(0, 255, 100, 0.6)';
-                strokeColor = '#00FF00';
-                icon = 'V';
-                break;
-            case 'L':
-                fillColor = 'rgba(200, 0, 255, 0.6)';
-                strokeColor = '#FF00FF';
-                icon = 'L';
-                break;
-            case 'X':
-                fillColor = 'rgba(255, 0, 255, 0.6)';
-                strokeColor = '#FF00FF';
-                icon = 'X';
-                break;
-            case 'Y':
-                fillColor = 'rgba(255, 255, 0, 0.6)';
-                strokeColor = '#FFFF00';
-                icon = 'Y';
-                break;
-            case 'A':
-                fillColor = 'rgba(255, 0, 0, 0.6)';
-                strokeColor = '#FF0000';
-                icon = 'A';
-                break;
-            case 'B':
-                fillColor = 'rgba(0, 150, 255, 0.6)';
-                strokeColor = '#0096FF';
-                icon = 'B';
-                break;
-            case 'C':
-                fillColor = 'rgba(150, 0, 255, 0.6)';
-                strokeColor = '#9600FF';
-                icon = 'C';
-                break;
+            case 'T': strokeColor = '#00FFFF'; break;
+            case 'V': strokeColor = '#00FF00'; break;
+            case 'L': strokeColor = '#FF00FF'; break;
+            case 'X': strokeColor = '#FF00FF'; break;
+            case 'Y': strokeColor = '#FFFF00'; break;
+            case 'A': strokeColor = '#FF0000'; break;
+            case 'B': strokeColor = '#0096FF'; break;
+            case 'C': strokeColor = '#9600FF'; break;
         }
         
         let isCoolingDown = cooldowns[cooldownKey] && cooldowns[cooldownKey] > currentTime;
         
+        // Dibujar la alcantarilla
+        if (GameBase.teleporterImage.complete && !GameBase.teleporterImage.hadError) {
+            try {
+                if (isCoolingDown) {
+                    // Si está en cooldown, dibujar en escala de grises
+                    ctx.filter = 'grayscale(100%) brightness(50%)';
+                }
+                
+                ctx.drawImage(GameBase.teleporterImage, x, y, gridSize, gridSize);
+                ctx.filter = 'none';
+                
+                if (!isCoolingDown) {
+                    // Efecto de brillo pulsante
+                    const pulse = Math.sin(currentTime * 0.005) * 0.5 + 0.5;
+                    ctx.shadowBlur = 15 * pulse;
+                    ctx.shadowColor = strokeColor;
+                    
+                    // Borde brillante
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, gridSize, gridSize);
+                }
+                
+                // Letra identificadora del teleport
+                ctx.shadowBlur = 0;
+                ctx.font = `bold ${gridSize * 0.55}px Arial`;
+                ctx.fillStyle = isCoolingDown ? '#888888' : strokeColor;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(cellType, x + gridSize / 2, y + gridSize / 2);
+                
+            } catch (e) {
+                console.error('[GameBase] Error al dibujar alcantarilla.png:', e);
+                GameBase.teleporterImage.hadError = true;
+                this.drawFallbackTeleporter(ctx, x, y, gridSize, cellType, isCoolingDown, strokeColor);
+            }
+        } else {
+            this.drawFallbackTeleporter(ctx, x, y, gridSize, cellType, isCoolingDown, strokeColor);
+        }
+    }
+    
+    static drawFallbackTeleporter(ctx, x, y, gridSize, cellType, isCoolingDown, strokeColor) {
+        // Respaldo visual si la imagen falla
         if (isCoolingDown) {
             ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
-            ctx.fillRect(x, y, gridSize, gridSize);
         } else {
-            ctx.fillStyle = fillColor;
-            ctx.fillRect(x, y, gridSize, gridSize);
-            
-            const pulse = Math.sin(currentTime * 0.005) * 0.5 + 0.5;
-            ctx.shadowBlur = 15 * pulse;
-            ctx.shadowColor = strokeColor;
+            ctx.fillStyle = 'rgba(100, 100, 100, 0.6)';
         }
+        ctx.fillRect(x, y, gridSize, gridSize);
 
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x + gridSize / 2, y + gridSize / 2, gridSize / 3.5, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        if (!isCoolingDown) {
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x + gridSize / 2, y + gridSize / 2, gridSize / 3.5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         
         ctx.font = `bold ${gridSize * 0.55}px Arial`;
         ctx.fillStyle = isCoolingDown ? '#888888' : strokeColor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(icon, x + gridSize / 2, y + gridSize / 2);
+        ctx.fillText(cellType, x + gridSize / 2, y + gridSize / 2);
     }
 
     // ========== ILUMINACIÓN ==========
