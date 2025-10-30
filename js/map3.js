@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const keys = {};
     const cooldowns = {};
+    let lastTeleportCell = null;
+    let teleportCooldownActive = false;
 
     // ========== MAPA DEL NIVEL 3 ==========
     const mazeMap = [
@@ -180,7 +182,106 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function checkTeleport() {
-        GameBase.checkTeleport(player, mazeMap, teleportGroups, cooldowns, TELEPORT_COOLDOWN, cooldownDisplay, cooldownTimer, GRID_SIZE);
+        const pos = player.getGridPosition();
+        
+        // Validar posición
+        if (pos.row < 0 || pos.row >= MAZE_ROWS || pos.col < 0 || pos.col >= MAZE_COLS) {
+            return;
+        }
+        
+        const cellType = mazeMap[pos.row][pos.col];
+        const cellKey = `${pos.row},${pos.col}`;
+        const currentTime = Date.now();
+
+        // Actualizar display de cooldown
+        if (teleportCooldownActive) {
+            let stillCoolingDown = false;
+            let minRemaining = Infinity;
+            
+            for (const key in cooldowns) {
+                if (cooldowns[key] > currentTime) {
+                    stillCoolingDown = true;
+                    const remaining = cooldowns[key] - currentTime;
+                    if (remaining < minRemaining) {
+                        minRemaining = remaining;
+                    }
+                }
+            }
+            
+            if (stillCoolingDown && cooldownDisplay && cooldownTimer) {
+                const remainingSeconds = Math.ceil(minRemaining / 1000);
+                cooldownTimer.textContent = remainingSeconds;
+                cooldownDisplay.style.display = 'block';
+            } else {
+                if (cooldownDisplay) cooldownDisplay.style.display = 'none';
+                teleportCooldownActive = false;
+            }
+        }
+
+        // Si no estamos en un teleporter, limpiar el registro
+        if (!teleportGroups[cellType] || teleportGroups[cellType].length === 0) {
+            lastTeleportCell = null;
+            return;
+        }
+
+        // Si ya estamos sobre este teleporter, no hacer nada (evita loop)
+        if (lastTeleportCell === cellKey) {
+            return;
+        }
+
+        // Verificar si hay cooldown activo para este teleporter
+        if (cooldowns[cellKey] && cooldowns[cellKey] > currentTime) {
+            return;
+        }
+
+        const group = teleportGroups[cellType];
+        if (group.length < 2) {
+            console.warn(`[MAP3] Grupo ${cellType} tiene menos de 2 teleporters`);
+            return;
+        }
+
+        // Encontrar teleporter actual en el grupo
+        const currentTeleport = group.find(tp => tp.row === pos.row && tp.col === pos.col);
+        
+        if (!currentTeleport) {
+            console.warn(`[MAP3] No se encontró teleporter actual en grupo ${cellType}`);
+            return;
+        }
+
+        // Obtener teleporters de destino (todos menos el actual)
+        const possibleTargets = group.filter(tp => tp.row !== pos.row || tp.col !== pos.col);
+
+        if (possibleTargets.length === 0) {
+            console.warn(`[MAP3] No hay destinos disponibles para ${cellType}`);
+            return;
+        }
+
+        // Elegir destino aleatorio
+        const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+        
+        console.log(`[MAP3] Teleportando ${cellType}: (${pos.row},${pos.col}) -> (${targetTeleport.row},${targetTeleport.col})`);
+        
+        // Aplicar cooldown a TODO el grupo
+        group.forEach(tp => {
+            const key = `${tp.row},${tp.col}`;
+            cooldowns[key] = currentTime + TELEPORT_COOLDOWN;
+        });
+        
+        teleportCooldownActive = true;
+        
+        // Mostrar cooldown
+        if (cooldownDisplay && cooldownTimer) {
+            cooldownDisplay.style.display = 'block';
+            cooldownTimer.textContent = Math.ceil(TELEPORT_COOLDOWN / 1000);
+        }
+
+        // Teletransportar al centro de la celda destino
+        player.setGridPosition(targetTeleport.row, targetTeleport.col);
+        
+        // Marcar este teleporter como el último usado
+        lastTeleportCell = `${targetTeleport.row},${targetTeleport.col}`;
+        
+        console.log(`[MAP3] Nueva posición del jugador: (${player.x}, ${player.y})`);
     }
 
     function pauseGame() {
@@ -257,7 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateSizes();
         player = new Player(0, 0, GRID_SIZE);
         player.setGridPosition(start.row, start.col);
-        GameBase.adjustPlayerZoom(player, canvas);
         window.addEventListener('resize', resizeGame);
         
         setTimeout(() => loadingOverlay.classList.add('hidden'), 1000);
