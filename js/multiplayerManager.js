@@ -16,6 +16,7 @@ class MultiplayerManager {
         // Crear jugadores según la configuración
         for (let i = 0; i < this.numPlayers; i++) {
             const player = new Player(0, 0, this.gridSize);
+            player.playerNumber = i + 1; // Asignar número de jugador (1 o 2)
             if (i === 1) { // Para el segundo jugador, usar un color ligeramente diferente
                 player.color = '#FFE566';
             }

@@ -232,6 +232,7 @@ class Player {
         const drawX = this.x - this.width / 2;
         const drawY = this.y - this.height / 2;
 
+        // Dibujar el sprite del jugador
         if (frame && frame.complete && frame.naturalHeight !== 0) {
             ctx.drawImage(frame, drawX, drawY, this.width, this.height);
         } else {
@@ -240,6 +241,33 @@ class Player {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        // Dibujar el indicador de jugador
+        if (this.playerNumber !== undefined) {
+            const indicatorY = drawY - this.gridSize * 0.3;
+            const indicatorSize = this.gridSize * 0.25;
+            
+            // Configurar sombra
+            ctx.shadowColor = this.playerNumber === 1 ? '#0044ff' : '#ff0000';
+            ctx.shadowBlur = 15;
+            
+            // Dibujar círculo con borde
+            ctx.beginPath();
+            ctx.arc(this.x, indicatorY, indicatorSize, 0, Math.PI * 2);
+            ctx.fillStyle = this.playerNumber === 1 ? '#0066ff' : '#ff2222';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Dibujar número
+            ctx.font = `bold ${indicatorSize}px Arial`;
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowBlur = 0;
+            ctx.fillText(this.playerNumber.toString(), this.x, indicatorY);
         }
     }
 
