@@ -107,7 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         keys[e.key] = true;
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
+        console.log('Tecla presionada:', e.key); // Agregar log para depuración
+        
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'z', 'Z', 'm', 'M'].includes(e.key)) {
             e.preventDefault();
         }
     });

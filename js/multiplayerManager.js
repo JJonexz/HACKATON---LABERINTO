@@ -10,6 +10,10 @@ class MultiplayerManager {
         // Cargar la configuración de jugadores
         this.numPlayers = parseInt(localStorage.getItem('gamePlayers') || '1');
         this.initializePlayers();
+
+        // Inicializar el sistema de proyectiles
+        this.projectileManager = new ProjectileManager();
+        console.log('ProjectileManager inicializado');
     }
 
     initializePlayers() {
@@ -40,6 +44,16 @@ class MultiplayerManager {
 
         this.players[0].update(keysPlayer1, canMoveTo, deltaTime);
 
+        // Disparos del jugador 1 (tecla Z)
+        if (keys['z'] || keys['Z']) {
+            console.log('Jugador 1 intentando disparar');
+            if (this.projectileManager) {
+                this.projectileManager.createProjectile(this.players[0], '#0066ff');
+            } else {
+                console.error('ProjectileManager no está inicializado para J1');
+            }
+        }
+
         // Actualizar segundo jugador con flechas si existe
         if (this.players.length > 1) {
             const keysPlayer2 = {
@@ -50,6 +64,24 @@ class MultiplayerManager {
             };
 
             this.players[1].update(keysPlayer2, canMoveTo, deltaTime);
+
+            // Disparos del jugador 2 (tecla M)
+            if (keys['m'] || keys['M']) {
+                console.log('Jugador 2 intentando disparar');
+                if (this.projectileManager) {
+                    this.projectileManager.createProjectile(this.players[1], '#ff2222');
+                } else {
+                    console.error('ProjectileManager no está inicializado para J2');
+                }
+            }
+        }
+
+        // Actualizar proyectiles si existen
+        if (this.projectileManager && this.projectileManager.projectiles) {
+            this.projectileManager.update(canMoveTo);
+            if (this.projectileManager.projectiles.length > 0) {
+                console.log('Proyectiles activos:', this.projectileManager.projectiles.length);
+            }
         }
     }
 
@@ -62,6 +94,10 @@ class MultiplayerManager {
             this.players.forEach(p => p.draw(ctx));
             // Aplicar iluminación
             this.drawLighting(ctx, canvasWidth, canvasHeight, this.players[0]);
+            // Dibujar proyectiles
+            if (this.projectileManager) {
+                this.projectileManager.draw(ctx);
+            }
             this.players[0].restoreCamera(ctx);
         } else {
             // Modo dos jugadores: pantalla dividida vertical
@@ -93,6 +129,11 @@ class MultiplayerManager {
                 this.drawGameWorld(ctx, player);
                 this.players.forEach(p => p.draw(ctx));
                 
+                // Dibujar proyectiles
+                if (this.projectileManager) {
+                    this.projectileManager.draw(ctx);
+                }
+                
                 // Aplicar iluminación
                 this.drawLighting(ctx, viewWidth, canvasHeight, player);
                 
@@ -119,11 +160,13 @@ class MultiplayerManager {
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'center';
         
-        // Indicador jugador 1 (WASD)
-        ctx.fillText('WASD', 60, canvasHeight - 20);
+        // Indicador jugador 1 (WASD + Z)
+        ctx.fillStyle = '#0066ff';
+        ctx.fillText('WASD + Z', 100, canvasHeight - 20);
         
-        // Indicador jugador 2 (Flechas)
-        ctx.fillText('↑←↓→', halfWidth + 60, canvasHeight - 20);
+        // Indicador jugador 2 (Flechas + M)
+        ctx.fillStyle = '#ff2222';
+        ctx.fillText('↑←↓→ + M', halfWidth + 100, canvasHeight - 20);
         ctx.restore();
     }
 
