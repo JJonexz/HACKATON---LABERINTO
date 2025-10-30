@@ -6,6 +6,7 @@
     <title>Selección de Nivel - El Último Turista</title>
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/roulette.css">
     <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
 </head>
 <body>
@@ -52,11 +53,19 @@
             <div class="loading-spinner"></div>
             <p>Cargando nivel...</p>
         </div>
+
+        <!-- Ruleta de niveles -->
+        <div id="level-roulette-container" class="level-roulette-container hidden">
+            <div class="level-roulette" id="level-roulette">
+                <!-- Las tarjetas se generarán dinámicamente con JavaScript -->
+            </div>
+        </div>
     </div>
 
-    <!-- Cargar player.js ANTES de main.js -->
+    <!-- Cargar scripts -->
     <script src="js/player.js"></script>
     <script src="js/gameBase.js"></script>
+    <script src="js/levelRoulette.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

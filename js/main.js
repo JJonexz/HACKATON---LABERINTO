@@ -210,6 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ========== SELECCIÓN DE NIVEL ==========
+    let levelRoulette = null;
+
     function selectRandomLevel() {
         buildAvailableLevels();
 
@@ -225,16 +227,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const idx = Math.floor(Math.random() * availableLevels.length);
-        const chosen = availableLevels[idx];
-        
-        if (!progress.playedThisSession.includes(chosen.id)) {
-            progress.playedThisSession.push(chosen.id);
-            localStorage.setItem('gameProgress', JSON.stringify(progress));
+        if (!levelRoulette) {
+            levelRoulette = new LevelRoulette();
+            levelRoulette.container.addEventListener('levelSelected', (e) => {
+                const chosenLevel = levels.find(l => l.id === e.detail.levelId);
+                if (chosenLevel && !progress.playedThisSession.includes(chosenLevel.id)) {
+                    progress.playedThisSession.push(chosenLevel.id);
+                    localStorage.setItem('gameProgress', JSON.stringify(progress));
+                }
+                setTimeout(() => {
+                    levelRoulette.hide();
+                    startLevel(chosenLevel);
+                }, 1000);
+            });
         }
-        
-        console.log('[MAIN v2.0] Elegido:', chosen.name);
-        startLevel(chosen);
+
+        levelRoulette.show();
+        setTimeout(() => levelRoulette.spin(), 500);
     }
 
     function startLevel(levelObj) {
@@ -286,6 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
             pauseOverlay.classList.remove('hidden');
             pauseMenu.classList.remove('hidden');
             canvas.classList.add('paused');
+        }
+        if (levelRoulette) {
+            levelRoulette.hide();
         }
     }
 
