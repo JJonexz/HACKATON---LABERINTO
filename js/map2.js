@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let GRID_SIZE;
     let player = null;
     let timerInterval;
+    let floorPattern = null; // Patrón del suelo
     let timeLeft = TIME_LIMIT;
     let collectibleCollected = false;
     let collectiblePulse = 0;
@@ -138,7 +139,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return GameBase.canMoveTo(x, y, radius, mazeMap, GRID_SIZE);
     }
 
+    // Función para crear el patrón del suelo
+    function createFloorPattern() {
+        const patternCanvas = document.createElement('canvas');
+        patternCanvas.width = GRID_SIZE;
+        patternCanvas.height = GRID_SIZE;
+        const patternCtx = patternCanvas.getContext('2d');
+
+        // Dibujar el patrón base
+        patternCtx.fillStyle = '#228B22';
+        patternCtx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
+
+        // Agregar textura de césped estática
+        patternCtx.strokeStyle = '#32CD32';
+        for(let i = 0; i < 5; i++) {
+            patternCtx.beginPath();
+            const startX = Math.random() * GRID_SIZE;
+            const startY = GRID_SIZE;
+            patternCtx.moveTo(startX, startY);
+            patternCtx.quadraticCurveTo(
+                startX + (Math.random() * 4 - 2),
+                GRID_SIZE * 0.7,
+                startX + (Math.random() * 6 - 3),
+                GRID_SIZE * 0.5
+            );
+            patternCtx.stroke();
+        }
+
+        return ctx.createPattern(patternCanvas, 'repeat');
+    }
+
     function drawMaze() {
+        // Crear el patrón del suelo si aún no existe
+        if (!floorPattern) {
+            floorPattern = createFloorPattern();
+        }
+
         const currentTime = Date.now();
         for (let r = 0; r < MAZE_ROWS; r++) {
             for (let c = 0; c < MAZE_COLS; c++) {
@@ -160,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         GameBase.drawTeleporter(ctx, x, y, GRID_SIZE, cell, `${r},${c}`, cooldowns, currentTime);
                         break;
                     default:
-                        ctx.fillStyle = '#000000';
+                        ctx.fillStyle = floorPattern;
                         ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
                         break;
                 }

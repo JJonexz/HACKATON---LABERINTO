@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let GRID_SIZE;
     let player = null;
     let timerInterval;
+    let floorPattern = null; // Patrón del suelo
     let timeLeft = TIME_LIMIT;
     let multiplayerManager = null;
     
@@ -149,7 +150,45 @@ document.addEventListener('DOMContentLoaded', () => {
         return GameBase.canMoveTo(x, y, radius, mazeMap, GRID_SIZE);
     }
 
+    // Función para crear el patrón del suelo
+    function createFloorPattern() {
+        const patternCanvas = document.createElement('canvas');
+        patternCanvas.width = GRID_SIZE;
+        patternCanvas.height = GRID_SIZE;
+        const patternCtx = patternCanvas.getContext('2d');
+
+        // Dibujar el patrón base de cemento
+        patternCtx.fillStyle = '#808080';
+        patternCtx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
+
+        // Agregar textura de cemento estática
+        patternCtx.fillStyle = 'rgba(128, 128, 128, 0.4)';
+        for(let i = 0; i < 6; i++) {
+            const rectSize = Math.random() * 4 + 2;
+            patternCtx.fillRect(
+                Math.random() * GRID_SIZE,
+                Math.random() * GRID_SIZE,
+                rectSize,
+                rectSize
+            );
+        }
+
+        // Agregar líneas de grietas estáticas
+        patternCtx.strokeStyle = 'rgba(90, 90, 90, 0.3)';
+        patternCtx.beginPath();
+        patternCtx.moveTo(Math.random() * GRID_SIZE, 0);
+        patternCtx.lineTo(Math.random() * GRID_SIZE, GRID_SIZE);
+        patternCtx.stroke();
+
+        return ctx.createPattern(patternCanvas, 'repeat');
+    }
+
     function drawMaze() {
+        // Crear el patrón del suelo si aún no existe
+        if (!floorPattern) {
+            floorPattern = createFloorPattern();
+        }
+
         const currentTime = Date.now();
         for (let r = 0; r < MAZE_ROWS; r++) {
             for (let c = 0; c < MAZE_COLS; c++) {
@@ -170,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         GameBase.drawTeleporter(ctx, x, y, GRID_SIZE, cell, `${r},${c}`, cooldowns, currentTime);
                         break;
                     default:
-                        ctx.fillStyle = '#000000';
+                        ctx.fillStyle = floorPattern;
                         ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
                         break;
                 }
