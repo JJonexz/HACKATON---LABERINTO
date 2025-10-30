@@ -18,6 +18,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createParticles();
 
+    // Sistema de selección de modo de juego
+    const modeButtons = document.querySelectorAll('.mode-button');
+    let selectedPlayers = 1;
+
+    modeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            modeButtons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            selectedPlayers = parseInt(button.dataset.players);
+            localStorage.setItem('gamePlayers', selectedPlayers);
+        });
+    });
+
+    // Modificar la función startGame global
+    window.startGame = function() {
+        localStorage.setItem('gamePlayers', selectedPlayers);
+        window.location.href = 'main.html';
+    };
+
     // Sistema de música
     const bgMusic = document.getElementById('bgMusic');
     const musicToggle = document.getElementById('music-toggle');

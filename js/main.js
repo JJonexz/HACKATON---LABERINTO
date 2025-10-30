@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let GRID_SIZE = 40;
     let gameActive = false;
     let animationId;
-    let player = null;
+    let playerManager = null;
     let currentDoorProximity = null;
 
     // ========== SISTEMA DE NIVELES Y PROGRESO V2.0 ==========
@@ -124,8 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function resizeGame() {
         const oldGridSize = GRID_SIZE;
         calculateSizes();
-        if (player && oldGridSize) {
-            player.updateGridSize(GRID_SIZE);
+        if (playerManager && oldGridSize) {
+            playerManager.updateGridSize(GRID_SIZE);
         }
     }
 
@@ -255,23 +255,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkDoorProximity() {
-        const pos = player.getGridPosition();
+        const positions = playerManager.getPlayersGridPositions();
         let isNearADoor = false;
 
-        for (const [key, door] of Object.entries(doors)) {
-            const distance = Math.sqrt(
-                Math.pow(pos.row - door.row, 2) + 
-                Math.pow(pos.col - door.col, 2)
-            );
-            
-            if (distance < 2) {
-                isNearADoor = true;
-                if (currentDoorProximity !== key) { 
-                    currentDoorProximity = key;
-                    selectRandomLevel();
+        for (const pos of positions) {
+            for (const [key, door] of Object.entries(doors)) {
+                const distance = Math.sqrt(
+                    Math.pow(pos.row - door.row, 2) + 
+                    Math.pow(pos.col - door.col, 2)
+                );
+                
+                if (distance < 2) {
+                    isNearADoor = true;
+                    if (currentDoorProximity !== key) { 
+                        currentDoorProximity = key;
+                        selectRandomLevel();
+                    }
+                    break; 
                 }
-                break; 
             }
+            if (isNearADoor) break;
         }
 
         if (!isNearADoor) currentDoorProximity = null;
@@ -328,22 +331,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========== BUCLE PRINCIPAL ==========
     function gameLoop() {
         if (!gameActive) return;
-        player.update(keys, canMoveTo, 16);
+        
+        playerManager.update(keys, canMoveTo, 16);
         checkDoorProximity();
         clearCanvas();
-        player.applyCamera(ctx, canvas.width, canvas.height);
-        drawMap();
-        player.draw(ctx);
-        drawLighting();
-        player.restoreCamera(ctx);
+        playerManager.draw(ctx, canvas.width, canvas.height);
+        
         animationId = requestAnimationFrame(gameLoop);
     }
 
     // ========== INICIO ==========
     function startGame() {
         calculateSizes();
-        player = new Player(0, 0, GRID_SIZE);
-        player.setGridPosition(playerStartRow, playerStartCol);
+        playerManager = new MultiplayerManager(GRID_SIZE);
+        
+        // Configurar posiciones iniciales para todos los jugadores
+        const startPositions = [
+            { row: playerStartRow, col: playerStartCol },
+            { row: playerStartRow, col: playerStartCol + 1 } // El segundo jugador empieza al lado del primero
+        ];
+        playerManager.setPlayersPosition(startPositions);
+
+        // Implementar el método drawGameWorld requerido
+        playerManager.drawGameWorld = function(ctx, currentPlayer) {
+            drawMap();
+        };
+
         window.addEventListener('resize', resizeGame);
         buildAvailableLevels();
         updateProgress();

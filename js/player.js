@@ -56,25 +56,25 @@ class Player {
     loadSprites() {
         const basePath = 'sprites/player/';
         
-        // Down sprites (índice 0 = idle, 1-2 = walking)
-        this.spriteImages.down[0].src = basePath + 'aba.png';
-        this.spriteImages.down[1].src = basePath + 'aba1.png';
-        this.spriteImages.down[2].src = basePath + 'aba2.png';
+        const directions = {
+            down: ['aba.png', 'aba1.png', 'aba2.png'],
+            up: ['arr.png', 'arr1.png', 'arr2.png'],
+            left: ['izq.png', 'izq1.png', 'izq2.png'],
+            right: ['der.png', 'der1.png', 'der2.png']
+        };
 
-        // Up sprites (índice 0 = idle, 1-2 = walking)
-        this.spriteImages.up[0].src = basePath + 'arr.png';
-        this.spriteImages.up[1].src = basePath + 'arr1.png';
-        this.spriteImages.up[2].src = basePath + 'arr2.png';
-
-        // Left sprites (índice 0 = idle, 1-2 = walking)
-        this.spriteImages.left[0].src = basePath + 'izq.png';
-        this.spriteImages.left[1].src = basePath + 'izq1.png';
-        this.spriteImages.left[2].src = basePath + 'izq2.png';
-
-        // Right sprites (índice 0 = idle, 1-2 = walking)
-        this.spriteImages.right[0].src = basePath + 'der.png';
-        this.spriteImages.right[1].src = basePath + 'der1.png';
-        this.spriteImages.right[2].src = basePath + 'der2.png';
+        // Cargar todos los sprites y asegurarse de que estén cargados
+        for (const [direction, files] of Object.entries(directions)) {
+            files.forEach((file, index) => {
+                this.spriteImages[direction][index] = new Image();
+                this.spriteImages[direction][index].src = basePath + file;
+                
+                // Agregar un manejador de error para cada imagen
+                this.spriteImages[direction][index].onerror = () => {
+                    console.error(`Error cargando sprite: ${basePath}${file}`);
+                };
+            });
+        }
     }
 
     // ========== ACTUALIZAR GRID SIZE ==========
