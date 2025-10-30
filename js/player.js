@@ -18,7 +18,7 @@ class Player {
         
         // ========== CÁMARA ==========
         this.cameraZoom = 2.5; // Nivel de zoom (ajustable)
-        this.cameraLerpFactor = 0.12; // Suavizado de la cámara (0-1, más pequeño = más suave)
+        this.cameraLerpFactor = 0.08; // Suavizado de la cámara (0-1, más pequeño = más suave)
         // Posición actual de la cámara en coordenadas del mundo (se interpola hacia el jugador)
         this.cameraX = this.x;
         this.cameraY = this.y;
@@ -163,9 +163,22 @@ class Player {
 
     // ========== APLICAR CÁMARA ==========
     applyCamera(ctx, canvasWidth, canvasHeight) {
-        // Interpolar la posición de la cámara hacia la posición del jugador
-        this.cameraX += (this.x - this.cameraX) * this.cameraLerpFactor;
-        this.cameraY += (this.y - this.cameraY) * this.cameraLerpFactor;
+        // Calcular el centro objetivo de la cámara
+        const targetX = this.x;
+        const targetY = this.y;
+
+        // Interpolar suavemente la posición de la cámara
+        if (Math.abs(this.cameraX - targetX) > 0.1) {
+            this.cameraX += (targetX - this.cameraX) * this.cameraLerpFactor;
+        } else {
+            this.cameraX = targetX;
+        }
+
+        if (Math.abs(this.cameraY - targetY) > 0.1) {
+            this.cameraY += (targetY - this.cameraY) * this.cameraLerpFactor;
+        } else {
+            this.cameraY = targetY;
+        }
 
         // Aplicar transformación: centrar la cámara en (cameraX, cameraY) y aplicar zoom
         ctx.save();

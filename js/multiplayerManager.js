@@ -72,33 +72,38 @@ class MultiplayerManager {
             ctx.fillRect(halfWidth - 2, 0, 4, canvasHeight);
             ctx.restore();
 
-            // Dibujar lado izquierdo (Jugador 1)
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(0, 0, halfWidth, canvasHeight);
-            ctx.clip();
-            this.players[0].applyCamera(ctx, halfWidth, canvasHeight);
-            this.drawGameWorld(ctx, this.players[0]);
-            // Dibujar todos los jugadores en la vista del jugador 1
-            this.players.forEach(p => p.draw(ctx));
-            // Aplicar iluminación para jugador 1
-            this.drawLighting(ctx, halfWidth, canvasHeight, this.players[0]);
-            this.players[0].restoreCamera(ctx);
-            ctx.restore();
+            // Función auxiliar para dibujar cada vista
+            const drawPlayerView = (player, startX, viewWidth) => {
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(startX, 0, viewWidth, canvasHeight);
+                ctx.clip();
 
-            // Dibujar lado derecho (Jugador 2)
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(halfWidth, 0, halfWidth, canvasHeight);
-            ctx.clip();
-            this.players[1].applyCamera(ctx, halfWidth, canvasHeight);
-            this.drawGameWorld(ctx, this.players[1]);
-            // Dibujar todos los jugadores en la vista del jugador 2
-            this.players.forEach(p => p.draw(ctx));
-            // Aplicar iluminación para jugador 2
-            this.drawLighting(ctx, halfWidth, canvasHeight, this.players[1]);
-            this.players[1].restoreCamera(ctx);
-            ctx.restore();
+                // Calcular el centro de la vista para este jugador
+                const centerX = startX + viewWidth / 2;
+                
+                // Aplicar la transformación de la cámara
+                ctx.save();
+                ctx.translate(centerX, canvasHeight / 2);
+                ctx.scale(player.cameraZoom, player.cameraZoom);
+                ctx.translate(-player.x, -player.y);
+
+                // Dibujar el mundo y los jugadores
+                this.drawGameWorld(ctx, player);
+                this.players.forEach(p => p.draw(ctx));
+                
+                // Aplicar iluminación
+                this.drawLighting(ctx, viewWidth, canvasHeight, player);
+                
+                ctx.restore();
+                ctx.restore();
+            };
+
+            // Dibujar vista del jugador 1 (izquierda)
+            drawPlayerView(this.players[0], 0, halfWidth);
+
+            // Dibujar vista del jugador 2 (derecha)
+            drawPlayerView(this.players[1], halfWidth, halfWidth);
 
             // Dibujar indicadores de control
             this.drawControlIndicators(ctx, canvasWidth, canvasHeight);
