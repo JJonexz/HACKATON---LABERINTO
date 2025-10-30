@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let collectibleCollected = false;
     let collectiblePulse = 0;
     let exitIndicatorPulse = 0;
+    let multiplayerManager = null;
     
     const gameState = {
         gameActive: true,
@@ -429,19 +430,13 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.lastTime = timestamp;
 
         GameBase.updateFPS(gameState, timestamp, fpsElement);
-        player.update(keys, canMoveTo, deltaTime);
+        multiplayerManager.update(keys, canMoveTo, deltaTime);
         checkWinCondition();
         checkCollectible();
         checkTeleport();
 
         GameBase.clearCanvas(ctx, canvas);
-        player.applyCamera(ctx, canvas.width, canvas.height);
-        drawMaze();
-        drawCollectible();
-        player.draw(ctx);
-        drawExitIndicator();
-        GameBase.drawLighting(ctx, player, canvas, 0.92);
-        player.restoreCamera(ctx);
+        multiplayerManager.draw(ctx, canvas.width, canvas.height);
 
         gameState.animationId = requestAnimationFrame(gameLoop);
     }
@@ -450,8 +445,41 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         const start = GameBase.findPlayerStart(mazeMap);
         calculateSizes();
-        player = new Player(0, 0, GRID_SIZE);
-        player.setGridPosition(start.row, start.col);
+        multiplayerManager = new MultiplayerManager(GRID_SIZE);
+        multiplayerManager.drawGameWorld = function(ctx) {
+            drawMaze();
+            drawCollectible();
+            drawExitIndicator();
+        };
+
+        // Buscar segunda posición inicial cerca de la primera
+        const startPos = [];
+        startPos.push(start); // Posición del jugador 1
+
+        // Buscar una posición válida adyacente para el jugador 2
+        const adjacentPositions = [
+            { row: start.row + 1, col: start.col },
+            { row: start.row - 1, col: start.col },
+            { row: start.row, col: start.col + 1 },
+            { row: start.row, col: start.col - 1 }
+        ];
+
+        for (const pos of adjacentPositions) {
+            if (pos.row >= 0 && pos.row < MAZE_ROWS && 
+                pos.col >= 0 && pos.col < MAZE_COLS && 
+                mazeMap[pos.row][pos.col] !== 'W') {
+                startPos.push(pos);
+                break;
+            }
+        }
+
+        // Si no se encontró posición adyacente, usar la misma que el jugador 1
+        if (startPos.length === 1) {
+            startPos.push(start);
+        }
+
+        multiplayerManager.setPlayersPosition(startPos);
+        player = multiplayerManager.players[0];
         window.addEventListener('resize', resizeGame);
         
         setTimeout(() => loadingOverlay.classList.add('hidden'), 1000);
