@@ -49,17 +49,48 @@ class GameBase {
     }
 
     // ========== DIBUJO ==========
+    static wallImage = null;
+
     static clearCanvas(ctx, canvas) {
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     static drawWall(ctx, x, y, gridSize, wallColor, strokeColor) {
-        ctx.fillStyle = wallColor;
-        ctx.fillRect(x, y, gridSize, gridSize);
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, gridSize, gridSize);
+        // Cargar la imagen de casa si aún no está cargada
+        if (!GameBase.wallImage) {
+            GameBase.wallImage = new Image();
+            GameBase.wallImage.src = 'sprites/map/PNG/casa.png';
+            
+            // Manejar errores de carga
+            GameBase.wallImage.onerror = () => {
+                console.error('[GameBase] Error al cargar casa.png - usando respaldo');
+                GameBase.wallImage.hadError = true;
+            };
+        }
+
+        // Si la imagen está cargada y no hubo errores, dibujarla
+        if (GameBase.wallImage.complete && !GameBase.wallImage.hadError) {
+            try {
+                ctx.drawImage(GameBase.wallImage, x, y, gridSize, gridSize);
+            } catch (e) {
+                console.error('[GameBase] Error al dibujar casa.png:', e);
+                GameBase.wallImage.hadError = true;
+                // Dibujar rectángulo de respaldo
+                ctx.fillStyle = wallColor;
+                ctx.fillRect(x, y, gridSize, gridSize);
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, y, gridSize, gridSize);
+            }
+        } else {
+            // Mientras se carga o si hubo error, mostrar rectángulo temporal
+            ctx.fillStyle = wallColor;
+            ctx.fillRect(x, y, gridSize, gridSize);
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, gridSize, gridSize);
+        }
     }
 
     static drawExit(ctx, x, y, gridSize, currentTime) {
