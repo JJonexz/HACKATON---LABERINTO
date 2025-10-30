@@ -44,7 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const keys = {};
     const cooldowns = {};
-    let lastTeleportCell = null;
+    // lastTeleportCell ahora almacena la última celda usada por jugador (clave: 'p1','p2')
+    let lastTeleportCell = {};
     let teleportCooldownActive = false;
 
     // ========== MAPA DEL NIVEL 1 ==========
@@ -171,15 +172,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function checkWinCondition() {
-        const pos = player.getGridPosition();
+    function checkWinCondition(playerObj) {
+        const pos = playerObj.getGridPosition();
         if (pos.row >= 0 && pos.row < MAZE_ROWS && pos.col >= 0 && pos.col < MAZE_COLS) {
             if (mazeMap[pos.row][pos.col] === 'E') winGame();
         }
     }
     
-    function checkTeleport() {
-        const pos = player.getGridPosition();
+    function checkTeleport(playerObj, playerIndex) {
+        const pos = playerObj.getGridPosition();
         
         // Validar posición
         if (pos.row < 0 || pos.row >= MAZE_ROWS || pos.col < 0 || pos.col >= MAZE_COLS) {
@@ -215,14 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Si no estamos en un teleporter, limpiar el registro
+        // Si no estamos en un teleporter, limpiar el registro para este jugador
         if (!teleportGroups[cellType] || teleportGroups[cellType].length === 0) {
-            lastTeleportCell = null;
+            const keyName = 'p' + (playerObj.playerNumber || (playerIndex + 1));
+            lastTeleportCell[keyName] = null;
             return;
         }
 
+        const keyName = 'p' + (playerObj.playerNumber || (playerIndex + 1));
+
         // Si ya estamos sobre este teleporter, no hacer nada (evita loop)
-        if (lastTeleportCell === cellKey) {
+        if (lastTeleportCell[keyName] === cellKey) {
             return;
         }
 
@@ -273,12 +277,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Teletransportar al centro de la celda destino
-        player.setGridPosition(targetTeleport.row, targetTeleport.col);
+        playerObj.setGridPosition(targetTeleport.row, targetTeleport.col);
         
-        // Marcar este teleporter como el último usado
-        lastTeleportCell = `${targetTeleport.row},${targetTeleport.col}`;
+        // Marcar este teleporter como el último usado para este jugador
+        lastTeleportCell[keyName] = `${targetTeleport.row},${targetTeleport.col}`;
         
-        console.log(`[MAP1] Nueva posición del jugador: (${player.x}, ${player.y})`);
+        console.log(`[MAP1] Nueva posición del jugador ${keyName}: (${playerObj.x}, ${playerObj.y})`);
     }
 
     function pauseGame() {
@@ -334,8 +338,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         GameBase.updateFPS(gameState, timestamp, fpsElement);
         multiplayerManager.update(keys, canMoveTo, deltaTime);
-        checkWinCondition();
-        checkTeleport();
+
+        // Comprobar condiciones y teleports para cada jugador
+        multiplayerManager.players.forEach((p, idx) => {
+            checkWinCondition(p);
+            checkTeleport(p, idx);
+        });
 
         GameBase.clearCanvas(ctx, canvas);
         multiplayerManager.draw(ctx, canvas.width, canvas.height);
