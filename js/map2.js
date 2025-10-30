@@ -32,9 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval;
     let floorPattern = null; // Patrón del suelo
     let timeLeft = TIME_LIMIT;
-    let collectibleCollected = false;
-    let collectiblePulse = 0;
-    let exitIndicatorPulse = 0;
+    // Estado de coleccionables por jugador
+    let collectibles = null;
     let multiplayerManager = null;
     
     const gameState = {
@@ -205,12 +204,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawCollectible() {
-        if (collectibleCollected) return;
+        // Si ambos jugadores han recogido la ruleta, no la dibujamos
+        if (collectibles.p1.collected && collectibles.p2.collected) return;
+
         const x = collectiblePosition.col * GRID_SIZE;
         const y = collectiblePosition.row * GRID_SIZE;
-        collectiblePulse += 0.05;
-        const pulse = Math.sin(collectiblePulse) * 0.3 + 0.7;
-        const glow = Math.sin(collectiblePulse * 2) * 10 + 15;
+
+        // Actualizamos el pulso para los jugadores que no han recogido la ruleta
+        if (!collectibles.p1.collected) collectibles.p1.pulse += 0.05;
+        if (!collectibles.p2.collected) collectibles.p2.pulse += 0.05;
+
+        // Usamos el pulso del primer jugador que no haya recogido la ruleta
+        const activePulse = !collectibles.p1.collected ? collectibles.p1.pulse : collectibles.p2.pulse;
+        const pulse = Math.sin(activePulse) * 0.3 + 0.7;
+        const glow = Math.sin(activePulse * 2) * 10 + 15;
         
         ctx.fillStyle = `rgba(255, 215, 0, ${pulse * 0.5})`;
         ctx.beginPath();
@@ -228,11 +235,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawExitIndicator() {
-        if (!collectibleCollected) return;
-        exitIndicatorPulse += 0.08;
-        const pulse = Math.sin(exitIndicatorPulse) * 0.4 + 0.6;
+        // Dibuja el indicador para cada jugador que haya recogido la ruleta
+        if (!multiplayerManager || !multiplayerManager.players || !collectibles) return;
+        
         const exitX = (exitPosition.col + 0.5) * GRID_SIZE;
         const exitY = (exitPosition.row + 0.5) * GRID_SIZE;
+
+        // Determinar qué jugador está siendo dibujado
+        let player, activePlayerIndex;
+        
+        // Si solo hay un jugador, siempre usar el jugador 1
+        if (multiplayerManager.players.length === 1) {
+            player = multiplayerManager.players[0];
+            activePlayerIndex = 0;
+        } else {
+            // En pantalla dividida, determinar qué vista se está dibujando
+            const transform = ctx.getTransform();
+            const viewportCenterX = transform.e;
+            activePlayerIndex = viewportCenterX >= canvas.width / 2 ? 1 : 0;
+            player = multiplayerManager.players[activePlayerIndex];
+        }
+        
+        const playerId = `p${activePlayerIndex + 1}`;
+
+        if (!collectibles[playerId] || !collectibles[playerId].collected) return;
+
+        // Actualiza el pulso individual
+        collectibles[playerId].indicatorPulse += 0.08;
+        const pulse = Math.sin(collectibles[playerId].indicatorPulse) * 0.4 + 0.6;
+
         const dx = exitX - player.x;
         const dy = exitY - player.y;
         const angle = Math.atan2(dy, dx);
@@ -240,29 +271,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const indicatorX = player.x + Math.cos(angle) * distance;
         const indicatorY = player.y + Math.sin(angle) * distance;
         
+        // Color específico por jugador
+        const playerColor = activePlayerIndex === 0 ? 
+            { r: 0, g: 150, b: 255 } :  // Azul para jugador 1
+            { r: 255, g: 0, b: 0 };     // Rojo para jugador 2
+            
         const gradient = ctx.createRadialGradient(indicatorX, indicatorY, 0, indicatorX, indicatorY, 30 * pulse);
-        gradient.addColorStop(0, `rgba(138, 43, 226, ${pulse})`);
-        gradient.addColorStop(0.5, `rgba(138, 43, 226, ${pulse * 0.5})`);
-        gradient.addColorStop(1, 'rgba(138, 43, 226, 0)');
+        gradient.addColorStop(0, `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse})`);
+        gradient.addColorStop(0.5, `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse * 0.5})`);
+        gradient.addColorStop(1, `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, 0)`);
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(indicatorX, indicatorY, 30 * pulse, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.fillStyle = `rgba(186, 85, 211, ${pulse})`;
+        ctx.fillStyle = `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse})`;
         ctx.beginPath();
         ctx.arc(indicatorX, indicatorY, 12, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.strokeStyle = `rgba(238, 130, 238, ${pulse})`;
+        ctx.strokeStyle = `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse})`;
         ctx.lineWidth = 3;
         ctx.shadowBlur = 20;
-        ctx.shadowColor = '#8A2BE2';
+        ctx.shadowColor = `rgb(${playerColor.r}, ${playerColor.g}, ${playerColor.b})`;
         ctx.beginPath();
         ctx.arc(indicatorX, indicatorY, 15, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
         
+        // Dibujar la flecha
         ctx.save();
         ctx.translate(indicatorX, indicatorY);
         ctx.rotate(angle);
@@ -276,15 +313,25 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
     }
 
-    function checkCollectible() {
-        if (collectibleCollected) return;
-        const pos = player.getGridPosition();
+    function checkCollectible(playerObj, playerIndex) {
+        if (!collectibles) return;
+        
+        const playerId = `p${playerIndex + 1}`;
+        if (!collectibles[playerId] || collectibles[playerId].collected) return;
+        
+        const pos = playerObj.getGridPosition();
         if (pos.row === collectiblePosition.row && pos.col === collectiblePosition.col) {
-            collectibleCollected = true;
-            collectibleIndicator.classList.remove('collectible-uncollected');
-            collectibleIndicator.classList.add('collectible-collected');
-            collectibleCheck.textContent = '✓';
-            localStorage.setItem('map2_collectible', 'true');
+            collectibles[playerId].collected = true;
+            
+            // Actualizar UI solo para el jugador 1
+            if (playerIndex === 0) {
+                collectibleIndicator.classList.remove('collectible-uncollected');
+                collectibleIndicator.classList.add('collectible-collected');
+                collectibleCheck.textContent = '✓';
+                localStorage.setItem('map2_collectible', 'true');
+            }
+            
+            showTemporaryMessage(`¡Jugador ${playerIndex + 1} ha encontrado la ruleta! Dirígete a la salida.`);
         }
     }
 
@@ -301,13 +348,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => tempMsg.style.display = 'none', 2000);
     }
 
-    function checkWinCondition(playerObj) {
+    function checkWinCondition(playerObj, playerIndex) {
+        if (!collectibles) return;
+        
+        const playerId = `p${playerIndex + 1}`;
         const pos = playerObj.getGridPosition();
         if (mazeMap[pos.row][pos.col] === 'E') {
-            if (collectibleCollected) {
+            if (collectibles[playerId] && collectibles[playerId].collected) {
                 winGame();
             } else {
-                showTemporaryMessage("¡Necesitas el coleccionable 🎡 para salir!");
+                showTemporaryMessage(`¡Jugador ${playerIndex + 1} necesita la ruleta 🎡 para salir!`);
             }
         }
     }
@@ -471,11 +521,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         GameBase.updateFPS(gameState, timestamp, fpsElement);
         multiplayerManager.update(keys, canMoveTo, deltaTime);
-        checkCollectible();
 
-        // Comprobar condiciones y teleports para cada jugador
+        // Comprobar coleccionables, condiciones y teleports para cada jugador
         multiplayerManager.players.forEach((p, idx) => {
-            checkWinCondition(p);
+            checkCollectible(p, idx);
+            checkWinCondition(p, idx);
             checkTeleport(p, idx);
         });
 
@@ -489,11 +539,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         const start = GameBase.findPlayerStart(mazeMap);
         calculateSizes();
+        
+        // Inicializar el estado de los coleccionables
+        collectibles = {
+            p1: { collected: false, pulse: 0, indicatorPulse: 0 },
+            p2: { collected: false, pulse: 0, indicatorPulse: 0 }
+        };
+        
         multiplayerManager = new MultiplayerManager(GRID_SIZE);
-        multiplayerManager.drawGameWorld = function(ctx) {
+        multiplayerManager.drawGameWorld = function(ctx, activePlayer) {
+            const currentTransform = ctx.getTransform();
             drawMaze();
             drawCollectible();
             drawExitIndicator();
+            ctx.setTransform(currentTransform);
         };
 
         // Buscar segunda posición inicial cerca de la primera
