@@ -17,7 +17,7 @@ class Player {
         this.isMoving = false;
         
         // ========== CÁMARA ==========
-        this.cameraZoom = 2.5; // Nivel de zoom (ajustable)
+        this.cameraZoom = 2.9; // Nivel de zoom (ajustable)
         this.cameraLerpFactor = 0.08; // Suavizado de la cámara (0-1, más pequeño = más suave)
         // Posición actual de la cámara en coordenadas del mundo (se interpola hacia el jugador)
         this.cameraX = this.x;

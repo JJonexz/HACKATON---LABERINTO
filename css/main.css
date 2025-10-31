@@ -1,8 +1,3 @@
-/* ========================================
-   MAIN.CSS - Estilos para selector de niveles
-   Usa variables de base.css
-   ======================================== */
-
 /* Estilo general del cuerpo */
 body {
     font-family: var(--font-main);

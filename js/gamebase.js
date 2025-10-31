@@ -6,7 +6,7 @@ class GameBase {
     
     // ========== CÁLCULO DE TAMAÑOS ==========
     static calculateSizes(canvas, rows, cols) {
-        const availableHeight = window.innerHeight - 70;
+        const availableHeight = window.innerHeight - 80;
         const availableWidth = window.innerWidth;
         
         const maxGridWidth = availableWidth / cols;

@@ -3,13 +3,20 @@ class LevelRoulette {
         this.container = document.getElementById('level-roulette-container');
         this.roulette = document.getElementById('level-roulette');
         this.levels = [
-            { id: 1, name: 'Laberinto Las Toninas', difficulty: 'easy', preview: this.createPreview(1) },
-            { id: 2, name: 'Santa Teresita', difficulty: 'medium', preview: this.createPreview(2) },
-            { id: 3, name: 'Villa Clelia', difficulty: 'hard', preview: this.createPreview(3) }
+            { id: 1, name: 'Laberinto Las Toninas', difficulty: 'easy', preview: null },
+            { id: 2, name: 'Santa Teresita', difficulty: 'medium', preview: null },
+            { id: 3, name: 'Villa Clelia', difficulty: 'hard', preview: null }
         ];
         this.selectedLevel = null;
         this.isSpinning = false;
-        this.availableLevels = [];
+        this.availableLevelIds = []; // Solo IDs de niveles disponibles
+        
+        // Generar previews al inicio
+        this.levels.forEach(level => {
+            level.preview = this.createPreview(level.id);
+        });
+        
+        console.log('[ROULETTE] Constructor inicializado');
     }
 
     createPreview(levelId) {
@@ -114,10 +121,17 @@ class LevelRoulette {
         }
     }
 
-    createCard(level) {
+    createCard(level, isAvailable) {
         const card = document.createElement('div');
         card.className = 'level-card';
         card.dataset.levelId = level.id;
+        card.dataset.available = isAvailable ? 'true' : 'false';
+
+        // Si no está disponible, agregar overlay de "ya jugado"
+        if (!isAvailable) {
+            card.style.opacity = '0.5';
+            card.style.filter = 'grayscale(1)';
+        }
 
         const title = document.createElement('div');
         title.className = 'level-card-title';
@@ -125,7 +139,19 @@ class LevelRoulette {
 
         const preview = document.createElement('div');
         preview.className = 'level-card-preview';
-        preview.appendChild(level.preview);
+        
+        if (level.preview) {
+            preview.appendChild(level.preview.cloneNode(true));
+        }
+
+        // Si no está disponible, agregar marca de "completado"
+        if (!isAvailable) {
+            const completedMark = document.createElement('div');
+            completedMark.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;color:#ff0000;text-shadow:0 0 10px #ff0000;';
+            completedMark.textContent = '✓';
+            preview.style.position = 'relative';
+            preview.appendChild(completedMark);
+        }
 
         const difficulty = document.createElement('div');
         difficulty.className = `level-difficulty difficulty-${level.difficulty}`;
@@ -148,72 +174,120 @@ class LevelRoulette {
     }
 
     populateRoulette() {
+        console.log('[ROULETTE] Populando ruleta...');
+        console.log('[ROULETTE] IDs disponibles:', this.availableLevelIds);
         this.roulette.innerHTML = '';
         
-        const levelsToShow = this.availableLevels.length > 0 
-            ? this.availableLevels 
-            : this.levels;
+        // SIEMPRE mostrar TODOS los niveles (1, 2, 3)
+        // Pero marcar cuáles están disponibles
+        const allLevelsWithStatus = this.levels.map(level => ({
+            ...level,
+            available: this.availableLevelIds.includes(level.id)
+        }));
         
-        const allLevels = [...levelsToShow, ...levelsToShow, ...levelsToShow];
-        allLevels.forEach(level => {
-            this.roulette.appendChild(this.createCard(level));
+        console.log('[ROULETTE] Niveles con estado:', allLevelsWithStatus.map(l => `${l.name}(${l.available ? 'DISPONIBLE' : 'JUGADO'})`));
+        
+        // Crear solo las 3 cartas necesarias
+        allLevelsWithStatus.forEach((levelWithStatus, index) => {
+            const card = this.createCard(levelWithStatus, levelWithStatus.available);
+            card.dataset.index = index;
+            this.roulette.appendChild(card);
         });
+        
+        // Resetear posición inicial - centrar la ruleta
+        this.roulette.style.transition = 'none';
+        this.roulette.style.transform = 'translate(-50%, -50%)';
+        
+        console.log('[ROULETTE] Total de cartas:', this.roulette.children.length);
     }
 
     setAvailableLevels(availableLevelsFromMain) {
-        this.availableLevels = availableLevelsFromMain;
-        console.log('[ROULETTE] Niveles disponibles:', this.availableLevels.map(l => l.name));
+        // Guardar solo los IDs de los niveles disponibles
+        this.availableLevelIds = availableLevelsFromMain.map(l => l.id);
+        console.log('[ROULETTE] IDs de niveles disponibles:', this.availableLevelIds);
     }
 
     show() {
+        console.log('[ROULETTE] Mostrando ruleta...');
         this.container.classList.remove('hidden');
         this.populateRoulette();
     }
 
     hide() {
+        console.log('[ROULETTE] Ocultando ruleta...');
         this.container.classList.add('hidden');
+        this.isSpinning = false;
     }
 
     spin() {
-        if (this.isSpinning) return;
-        
-        const levelsToChooseFrom = this.availableLevels.length > 0 
-            ? this.availableLevels 
-            : this.levels;
-        
-        if (levelsToChooseFrom.length === 0) {
-            console.error('[ROULETTE] No hay niveles para elegir');
+        if (this.isSpinning) {
+            console.log('[ROULETTE] Ya está girando, ignorando...');
             return;
         }
         
+        if (this.availableLevelIds.length === 0) {
+            console.error('[ROULETTE] No hay niveles disponibles para seleccionar');
+            return;
+        }
+        
+        console.log('[ROULETTE] Iniciando spin...');
         this.isSpinning = true;
 
-        const randomIndex = Math.floor(Math.random() * levelsToChooseFrom.length);
-        this.selectedLevel = levelsToChooseFrom[randomIndex];
+        // Seleccionar SOLO de los niveles disponibles
+        const randomIndex = Math.floor(Math.random() * this.availableLevelIds.length);
+        const selectedId = this.availableLevelIds[randomIndex];
+        this.selectedLevel = this.levels.find(l => l.id === selectedId);
         
-        console.log('[ROULETTE] Nivel seleccionado:', this.selectedLevel.name, 'ID:', this.selectedLevel.id);
+        console.log('[ROULETTE] Nivel seleccionado:', this.selectedLevel.name, '(ID:', this.selectedLevel.id, ')');
 
-        const cardWidth = 270;
-        const centerOffset = (this.container.offsetWidth - cardWidth) / 2;
-        const targetOffset = -(cardWidth * (levelsToChooseFrom.length + randomIndex)) + centerOffset;
+        // Encontrar el índice real en el array de 3 niveles
+        const targetIndex = this.levels.findIndex(l => l.id === selectedId);
+        
+        // Calcular desplazamiento para centrar la carta seleccionada
+        const cardWidth = 250; // Ancho de cada carta
+        const gap = 20; // Espacio entre cartas
+        const containerWidth = this.container.offsetWidth;
+        
+        // Posición de la carta objetivo relativa al centro
+        const targetCardCenter = (targetIndex * (cardWidth + gap)) + (cardWidth / 2);
+        const containerCenter = containerWidth / 2;
+        
+        // Desplazamiento necesario para centrar la carta objetivo
+        const offset = targetCardCenter - containerCenter;
+        
+        console.log('[ROULETTE] Target index:', targetIndex, 'Offset:', offset);
 
-        this.roulette.style.transform = `translateX(${targetOffset}px)`;
+        // Aplicar animación
+        this.roulette.style.transition = 'transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+        this.roulette.style.transform = `translate(calc(-50% - ${offset}px), -50%)`;
 
+        // Después de la animación
         setTimeout(() => {
-            const cards = this.roulette.getElementsByClassName('level-card');
-            Array.from(cards).forEach(card => {
+            console.log('[ROULETTE] Animación completada');
+            
+            // Marcar carta seleccionada
+            const cards = Array.from(this.roulette.getElementsByClassName('level-card'));
+            cards.forEach((card, index) => {
                 card.classList.remove('selected');
-                if (card.dataset.levelId === this.selectedLevel.id.toString()) {
+                if (index === targetIndex) {
                     card.classList.add('selected');
+                    console.log('[ROULETTE] Carta marcada - Índice:', index);
                 }
             });
+            
             this.isSpinning = false;
             
+            // Emitir evento
             const event = new CustomEvent('levelSelected', {
-                detail: { levelId: this.selectedLevel.id }
+                detail: { 
+                    levelId: this.selectedLevel.id,
+                    levelData: this.selectedLevel
+                }
             });
             this.container.dispatchEvent(event);
-        }, 3000);
+            console.log('[ROULETTE] Evento emitido - ID:', this.selectedLevel.id);
+            
+        }, 3100);
     }
 }
 

@@ -258,43 +258,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========== SELECCIÓN DE NIVEL ==========
     let levelRoulette = null;
 
-    function selectRandomLevel() {
-        buildAvailableLevels();
+function selectRandomLevel() {
+    buildAvailableLevels();
 
-        if (!availableLevels || availableLevels.length === 0) {
-            const allCompleted = progress.completed.length === levels.length;
-            const msg = document.createElement('div');
-            msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:' + (allCompleted ? 'rgba(0,40,0,0.95)' : 'rgba(40,0,0,0.95)') + ';color:#fff;padding:30px 40px;border-radius:12px;z-index:1000;text-align:center;font-size:1.4em;border:3px solid ' + (allCompleted ? '#00ff00' : '#ff0000') + ';box-shadow:0 0 30px ' + (allCompleted ? '#00ff00' : '#ff0000');
-            msg.innerHTML = allCompleted 
-                ? '🏆 ¡Has completado todos los niveles!<br><span style="font-size:0.7em">No hay más desafíos disponibles.</span>'
-                : '⚠️ No hay niveles disponibles.<br><span style="font-size:0.7em">Completa o reinicia tu progreso.</span>';
-            document.body.appendChild(msg);
-            setTimeout(() => msg.remove(), 3000);
-            return;
-        }
-
-        if (!levelRoulette) {
-            levelRoulette = new LevelRoulette();
-            levelRoulette.container.addEventListener('levelSelected', (e) => {
-                const chosenLevel = levels.find(l => l.id === e.detail.levelId);
-                if (chosenLevel && !progress.playedThisSession.includes(chosenLevel.id)) {
-                    progress.playedThisSession.push(chosenLevel.id);
-                    localStorage.setItem('gameProgress', JSON.stringify(progress));
-                    console.log('[MAIN] Nivel jugado agregado:', chosenLevel.id, 'Sesión actual:', progress.playedThisSession);
-                }
-                setTimeout(() => {
-                    levelRoulette.hide();
-                    startLevel(chosenLevel);
-                }, 1000);
-            });
-        }
-
-        // CRÍTICO: Pasar los niveles disponibles a la ruleta antes de mostrarla
-        levelRoulette.setAvailableLevels(availableLevels);
-        levelRoulette.show();
-        setTimeout(() => levelRoulette.spin(), 500);
+    if (!availableLevels || availableLevels.length === 0) {
+        const allCompleted = progress.completed.length === levels.length;
+        const msg = document.createElement('div');
+        msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:' + (allCompleted ? 'rgba(0,40,0,0.95)' : 'rgba(40,0,0,0.95)') + ';color:#fff;padding:30px 40px;border-radius:12px;z-index:1000;text-align:center;font-size:1.4em;border:3px solid ' + (allCompleted ? '#00ff00' : '#ff0000') + ';box-shadow:0 0 30px ' + (allCompleted ? '#00ff00' : '#ff0000');
+        msg.innerHTML = allCompleted 
+            ? '🏆 ¡Has completado todos los niveles!<br><span style="font-size:0.7em">No hay más desafíos disponibles.</span>'
+            : '⚠️ No hay niveles disponibles.<br><span style="font-size:0.7em">Completa o reinicia tu progreso.</span>';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
+        return;
     }
 
+    // *** CRÍTICO: PAUSAR EL JUEGO cuando se muestra la ruleta ***
+    gameActive = false;
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+
+    if (!levelRoulette) {
+        levelRoulette = new LevelRoulette();
+        levelRoulette.container.addEventListener('levelSelected', (e) => {
+            const chosenLevel = levels.find(l => l.id === e.detail.levelId);
+            if (chosenLevel && !progress.playedThisSession.includes(chosenLevel.id)) {
+                progress.playedThisSession.push(chosenLevel.id);
+                localStorage.setItem('gameProgress', JSON.stringify(progress));
+                console.log('[MAIN] Nivel jugado agregado:', chosenLevel.id, 'Sesión actual:', progress.playedThisSession);
+            }
+            setTimeout(() => {
+                levelRoulette.hide();
+                startLevel(chosenLevel);
+            }, 1000);
+        });
+    }
+
+    // CRÍTICO: Pasar los niveles disponibles a la ruleta antes de mostrarla
+    levelRoulette.setAvailableLevels(availableLevels);
+    levelRoulette.show();
+    setTimeout(() => levelRoulette.spin(), 500);
+}
     function startLevel(levelObj) {
         gameActive = false;
         loadingOverlay.classList.remove('hidden');
