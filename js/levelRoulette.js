@@ -3,9 +3,9 @@ class LevelRoulette {
         this.container = document.getElementById('level-roulette-container');
         this.roulette = document.getElementById('level-roulette');
         this.levels = [
-            { id: 1, name: 'Laberinto Básico', difficulty: 'easy', preview: this.createPreview(1) },
-            { id: 2, name: 'Laberinto del Tesoro', difficulty: 'medium', preview: this.createPreview(2) },
-            { id: 3, name: 'Laberinto Final', difficulty: 'hard', preview: this.createPreview(3) }
+            { id: 1, name: 'Laberinto Las Toninas', difficulty: 'easy', preview: this.createPreview(1) },
+            { id: 2, name: 'Santa Teresita', difficulty: 'medium', preview: this.createPreview(2) },
+            { id: 3, name: 'Villa Clelia', difficulty: 'hard', preview: this.createPreview(3) }
         ];
         this.selectedLevel = null;
         this.isSpinning = false;

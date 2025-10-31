@@ -704,4 +704,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startGame();
 });
-

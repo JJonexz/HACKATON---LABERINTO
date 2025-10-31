@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('map2_collectible', 'true');
             }
             
-            showTemporaryMessage(`¡Jugador ${playerIndex + 1} ha encontrado la ruleta! Dirígete a la salida.`);
+            showTemporaryMessage(`¡Jugador ${playerIndex + 1} ha encontrado la rueda! Dirígete a la salida.`);
         }
     }
 
@@ -357,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (collectibles[playerId] && collectibles[playerId].collected) {
                 winGame();
             } else {
-                showTemporaryMessage(`¡Jugador ${playerIndex + 1} necesita la ruleta 🎡 para salir!`);
+                showTemporaryMessage(`¡Jugador ${playerIndex + 1} necesita la rueda para salir!`);
             }
         }
     }
