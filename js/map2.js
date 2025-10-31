@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dx = exitX - player.x;
         const dy = exitY - player.y;
         const angle = Math.atan2(dy, dx);
-        const distance = 80;
+        const distance = 8000;
         const indicatorX = player.x + Math.cos(angle) * distance;
         const indicatorY = player.y + Math.sin(angle) * distance;
         
@@ -298,19 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.arc(indicatorX, indicatorY, 15, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
-        
-        // Dibujar la flecha
-        ctx.save();
-        ctx.translate(indicatorX, indicatorY);
-        ctx.rotate(angle);
-        ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
-        ctx.beginPath();
-        ctx.moveTo(8, 0);
-        ctx.lineTo(-4, -6);
-        ctx.lineTo(-4, 6);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
     }
 
     function checkCollectible(playerObj, playerIndex) {
