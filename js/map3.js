@@ -75,6 +75,30 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastTeleportCell = {};
     let teleportCooldownActive = false;
 
+     let isMusicPlaying = false;
+
+    const musicToggleBtn = document.getElementById('music-toggle');
+    const backgroundMusic = document.getElementById('background-music');
+
+    // ========== SISTEMA DE MÚSICA ==========
+    function toggleMusic() {
+        if (isMusicPlaying) {
+            backgroundMusic.pause();
+            musicToggleBtn.textContent = '🔇';
+            musicToggleBtn.classList.remove('active');
+            isMusicPlaying = false;
+        } else {
+            backgroundMusic.play().catch(err => {
+                console.log('Error al reproducir música:', err);
+            });
+            musicToggleBtn.textContent = '🔊';
+            musicToggleBtn.classList.add('active');
+            isMusicPlaying = true;
+        }
+    }
+
+    musicToggleBtn.addEventListener('click', toggleMusic);
+
     // ========== MAPA DEL NIVEL 3 ==========
     const mazeMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
@@ -434,26 +458,49 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {Player} playerObj - La instancia del jugador.
      * @param {number} playerIndex - El índice del jugador (0 o 1).
      */
-    function checkWinCondition(playerObj, playerIndex) {
-        if (!collectibles) return;
+   /**
+ * Comprueba si el jugador ha llegado a la salida y tiene el motor.
+ * @param {Player} playerObj - La instancia del jugador.
+ * @param {number} playerIndex - El índice del jugador (0 o 1).
+ */
+function checkWinCondition(playerObj, playerIndex) {
+    if (!collectibles) return;
+    
+    const playerId = `p${playerIndex + 1}`;
+    const pos = playerObj.getGridPosition();
+    
+    // Verificar que estamos en una posición válida del mapa
+    if (pos.row < 0 || pos.row >= MAZE_ROWS || pos.col < 0 || pos.col >= MAZE_COLS) {
+        return;
+    }
+    
+    if (mazeMap[pos.row][pos.col] === 'E') {
+        // Determinar si estamos en modo un jugador
+        const isSinglePlayer = multiplayerManager.players.length === 1;
         
-        const playerId = `p${playerIndex + 1}`;
-        const pos = playerObj.getGridPosition();
-        if (mazeMap[pos.row][pos.col] === 'E') {
-            // Se comprueba si AMBOS jugadores han recogido el motor para ganar
+        if (isSinglePlayer) {
+            // Modo un jugador: solo necesita que este jugador tenga el motor
+            if (collectibles[playerId].collected) {
+                winGame();
+            } else {
+                showTemporaryMessage(`¡Necesitas el motor ⚙️ para salir!`);
+            }
+        } else {
+            // Modo dos jugadores: AMBOS necesitan el motor
             if (collectibles.p1.collected && collectibles.p2.collected) {
                 winGame();
             } else {
                 // Si este jugador lo tiene pero el otro no
                 if (collectibles[playerId].collected) {
-                    showTemporaryMessage(`¡Jugador ${playerIndex + 1}, espera a tu compañero!`);
+                    showTemporaryMessage(`¡Espera a tu compañero!`);
                 } else {
                     // Si este jugador no lo tiene
-                    showTemporaryMessage(`¡Jugador ${playerIndex + 1} necesita el motor ⚙️ para salir!`);
+                    showTemporaryMessage(`¡Necesitas el motor ⚙️ para salir!`);
                 }
             }
         }
     }
+}
     
     /**
      * Comprueba si el jugador está en un teletransportador y lo mueve.

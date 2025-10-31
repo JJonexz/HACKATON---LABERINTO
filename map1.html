@@ -21,11 +21,18 @@
                 <div id="fps-container">
                     FPS: <span id="fps">60</span>
                 </div>
+                <button id="music-toggle" class="header-btn" title="Música">
+                 🔇
+                </button>
                 <div id="teleport-cooldown" style="display: none">
                     Teleport: <span id="cooldown-timer">0</span>s
                 </div>
             </div>
         </div>
+
+        <audio id="background-music" loop>
+            <source src="audio/suspenso.mp3" type="audio/mp3">
+        </audio>
 
         <!-- Canvas del juego -->
         <canvas id="gameCanvas"></canvas>
@@ -67,6 +74,11 @@
             <p>Cargando nivel...</p>
         </div>
     </div>
+
+        <!-- Audio de fondo -->
+    <audio id="bgMusic" loop>
+        <source src="audio/suspenso.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- ⚠️ IMPORTANTE: Cargar en el orden correcto -->
     <script src="js/player.js"></script>

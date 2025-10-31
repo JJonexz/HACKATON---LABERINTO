@@ -54,6 +54,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const collectiblePosition = { row: 17, col: 8 };
     const exitPosition = { row: 37, col: 51 };
 
+     let isMusicPlaying = false;
+
+    const musicToggleBtn = document.getElementById('music-toggle');
+    const backgroundMusic = document.getElementById('background-music');
+
+    // ========== SISTEMA DE MÚSICA ==========
+    function toggleMusic() {
+        if (isMusicPlaying) {
+            backgroundMusic.pause();
+            musicToggleBtn.textContent = '🔇';
+            musicToggleBtn.classList.remove('active');
+            isMusicPlaying = false;
+        } else {
+            backgroundMusic.play().catch(err => {
+                console.log('Error al reproducir música:', err);
+            });
+            musicToggleBtn.textContent = '🔊';
+            musicToggleBtn.classList.add('active');
+            isMusicPlaying = true;
+        }
+    }
+
+    musicToggleBtn.addEventListener('click', toggleMusic);
+
     // ========== MAPA DEL NIVEL 2 ==========
     const mazeMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",

@@ -6,8 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const instructionsOverlay = document.getElementById('instructions-overlay');
     const closeInstructionsBtn = document.getElementById('close-instructions');
     const instructionsToggleBtn = document.getElementById('instructions-toggle');
-    const musicToggleBtn = document.getElementById('music-toggle');
-    const backgroundMusic = document.getElementById('background-music');
     const loadingOverlay = document.getElementById('loading-overlay');
     
     let GRID_SIZE = 40;
@@ -16,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let playerManager = null;
     let currentDoorProximity = null;
     let isMusicPlaying = false;
+
+    const musicToggleBtn = document.getElementById('music-toggle');
+    const backgroundMusic = document.getElementById('background-music');
 
     // ========== SISTEMA DE MÚSICA ==========
     function toggleMusic() {

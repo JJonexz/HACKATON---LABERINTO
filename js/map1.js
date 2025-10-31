@@ -48,6 +48,30 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastTeleportCell = {};
     let teleportCooldownActive = false;
 
+     let isMusicPlaying = false;
+
+    const musicToggleBtn = document.getElementById('music-toggle');
+    const backgroundMusic = document.getElementById('background-music');
+
+    // ========== SISTEMA DE MÚSICA ==========
+    function toggleMusic() {
+        if (isMusicPlaying) {
+            backgroundMusic.pause();
+            musicToggleBtn.textContent = '🔇';
+            musicToggleBtn.classList.remove('active');
+            isMusicPlaying = false;
+        } else {
+            backgroundMusic.play().catch(err => {
+                console.log('Error al reproducir música:', err);
+            });
+            musicToggleBtn.textContent = '🔊';
+            musicToggleBtn.classList.add('active');
+            isMusicPlaying = true;
+        }
+    }
+
+    musicToggleBtn.addEventListener('click', toggleMusic);
+
     // ========== MAPA DEL NIVEL 1 ==========
     const mazeMap = [
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",

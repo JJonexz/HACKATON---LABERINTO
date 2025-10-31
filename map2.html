@@ -21,6 +21,9 @@
                 <div id="fps-container">
                     FPS: <span id="fps">60</span>
                 </div>
+                <button id="music-toggle" class="header-btn" title="Música">
+                 🔇
+                </button>
                 <div id="teleport-cooldown" style="display: none">
                     Teleport: <span id="cooldown-timer">0</span>s
                 </div>
@@ -70,6 +73,10 @@
             <p>Cargando nivel...</p>
         </div>
     </div>
+
+        <audio id="background-music" loop>
+            <source src="audio/suspenso.mp3" type="audio/mp3">
+        </audio>
 
     <script src="js/player.js"></script>
     <script src="js/projectileManager.js"></script>
