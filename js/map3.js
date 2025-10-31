@@ -1,5 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // ========== INYECCIÓN DE ESTILO PARA COLECCIONABLE PARCIAL ==========
+    // Se añade un estilo para el estado 'parcial' (un jugador ha recogido)
+    const partialStyle = `
+        .collectible-partial {
+            opacity: 1;
+            filter: grayscale(0);
+            animation: collectPulse 1s ease; /* Usar la misma animación de pulso */
+        }
+        .collectible-partial #collectible-check {
+            color: #ff4444; /* Mantener la X en rojo */
+            text-shadow: 0 0 10px #ff4444; /* Añadir un brillo rojo */
+        }
+    `;
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = partialStyle;
+    document.head.appendChild(styleSheet);
+    // ===================================================================
+
     // ========== ELEMENTOS DOM ==========
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -19,10 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const loseRestartButton = document.getElementById('lose-restart-button');
     const cooldownDisplay = document.getElementById('teleport-cooldown');
     const cooldownTimer = document.getElementById('cooldown-timer');
+    // Elementos del coleccionable
+    const collectibleIndicator = document.getElementById('collectible-indicator');
+    const collectibleCheck = document.getElementById('collectible-check');
 
     // ========== CONFIGURACIÓN DEL NIVEL ==========
     const LEVEL_ID = 3;
-    const TIME_LIMIT = 60;
+    const TIME_LIMIT = 120; // Aumentado para dar tiempo a buscar el coleccionable
     const TELEPORT_COOLDOWN = 5000;
     
     let GRID_SIZE;
@@ -31,6 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let floorPattern = null; // Patrón del suelo
     let timeLeft = TIME_LIMIT;
     let multiplayerManager = null;
+    
+    // Estado de coleccionables
+    let collectibles = null;
+    const collectiblePosition = { row: 19, col: 8 }; // Posición del motor (movido a un pasillo abierto)
+    const exitPosition = { row: 22, col: 4 }; // Posición de la salida 'E'
     
     const gameState = {
         gameActive: true,
@@ -69,10 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
         "W  W   WW W   W      WwwwW      WwwwW      W   W      W  W",
         "W  W      W   W   C  W   W      W   W  W   W   W      W  W",
         "W  W      W   W WW   W   W      W   W      W   W      W  W",
-        "W        BWWWWW      W        W        WWW      W        W",
+        "W        BWWWWW      W        W        WWW      W        W", // Posición (19, 8) está aquí
         "WWWWWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW   WWWWWWWW  W",
         "W  W      W   W      W   W      W   W      W   W      W  W",
-        "W  W  E   W   W  W   W   W      W   W   C  W   W      W  W",
+        "W  W  E   W   W  W   W   W      W   W   C  W   W      W  W", // Salida en 22, 4
         "W  W      W   W      W   W      W   W      W   W      W  W",
         "W  W   WW W   W      W   W      W   W W    W   W      W  W",
         "W    W    WWWWW W             W        W        W        W",
@@ -217,11 +244,222 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function checkWinCondition(playerObj) {
+    /**
+     * Dibuja el coleccionable (motor) en el lienzo.
+     */
+    function drawCollectible() {
+        // Si ambos jugadores han recogido el motor, no lo dibujamos
+        if (collectibles.p1.collected && collectibles.p2.collected) return;
+
+        const x = collectiblePosition.col * GRID_SIZE;
+        const y = collectiblePosition.row * GRID_SIZE;
+
+        // Actualizamos el pulso para los jugadores que no han recogido el motor
+        if (!collectibles.p1.collected) collectibles.p1.pulse += 0.05;
+        if (!collectibles.p2.collected) collectibles.p2.pulse += 0.05;
+
+        // Usamos el pulso del primer jugador que no haya recogido el motor
+        const activePulse = !collectibles.p1.collected ? collectibles.p1.pulse : collectibles.p2.pulse;
+        const pulse = Math.sin(activePulse) * 0.3 + 0.7;
+        const glow = Math.sin(activePulse * 2) * 10 + 15;
+        
+        // Color plateado para el motor
+        ctx.fillStyle = `rgba(192, 192, 192, ${pulse * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(x + GRID_SIZE / 2, y + GRID_SIZE / 2, GRID_SIZE / 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowBlur = glow;
+        ctx.shadowColor = '#C0C0C0';
+        ctx.font = `${GRID_SIZE * 0.7}px Arial`;
+        ctx.fillStyle = `rgba(220, 220, 220, ${pulse})`; // Un poco más brillante
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⚙️', x + GRID_SIZE / 2, y + GRID_SIZE / 2); // Emoji de motor
+        ctx.shadowBlur = 0;
+    }
+
+    /**
+     * Dibuja un indicador que guía al jugador hacia la salida una vez que ha recogido el motor.
+     */
+    function drawExitIndicator() {
+        // Dibuja el indicador para cada jugador que haya recogido el motor
+        if (!multiplayerManager || !multiplayerManager.players || !collectibles) return;
+        
+        const exitX = (exitPosition.col + 0.5) * GRID_SIZE;
+        const exitY = (exitPosition.row + 0.5) * GRID_SIZE;
+
+        // Determinar qué jugador está siendo dibujado
+        let player, activePlayerIndex;
+        
+        // Si solo hay un jugador, siempre usar el jugador 1
+        if (multiplayerManager.players.length === 1) {
+            player = multiplayerManager.players[0];
+            activePlayerIndex = 0;
+        } else {
+            // En pantalla dividida, determinar qué vista se está dibujando
+            const transform = ctx.getTransform();
+            const viewportCenterX = transform.e;
+            activePlayerIndex = viewportCenterX >= canvas.width / 2 ? 1 : 0;
+            player = multiplayerManager.players[activePlayerIndex];
+        }
+        
+        const playerId = `p${activePlayerIndex + 1}`;
+
+        if (!collectibles[playerId] || !collectibles[playerId].collected) return;
+
+        // Actualiza el pulso individual
+        collectibles[playerId].indicatorPulse += 0.08;
+        const pulse = Math.sin(collectibles[playerId].indicatorPulse) * 0.4 + 0.6;
+
+        const dx = exitX - player.x;
+        const dy = exitY - player.y;
+        const angle = Math.atan2(dy, dx);
+        const distance = 80; // Distancia desde el jugador
+        const indicatorX = player.x + Math.cos(angle) * distance;
+        const indicatorY = player.y + Math.sin(angle) * distance;
+        
+        // Color específico por jugador
+        const playerColor = activePlayerIndex === 0 ? 
+            { r: 0, g: 150, b: 255 } :  // Azul para jugador 1
+            { r: 255, g: 0, b: 0 };     // Rojo para jugador 2
+            
+        const gradient = ctx.createRadialGradient(indicatorX, indicatorY, 0, indicatorX, indicatorY, 30 * pulse);
+        gradient.addColorStop(0, `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse})`);
+        gradient.addColorStop(0.5, `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse * 0.5})`);
+        gradient.addColorStop(1, `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, 0)`);
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, 30 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse})`;
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = `rgba(${playerColor.r}, ${playerColor.g}, ${playerColor.b}, ${pulse})`;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = `rgb(${playerColor.r}, ${playerColor.g}, ${playerColor.b})`;
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, 15, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        // Dibujar la flecha
+        ctx.save();
+        ctx.translate(indicatorX, indicatorY);
+        ctx.rotate(angle);
+        ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(-4, -6);
+        ctx.lineTo(-4, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    /**
+     * Muestra un mensaje temporal en el centro de la pantalla.
+     * @param {string} text - El texto a mostrar.
+     */
+    function showTemporaryMessage(text) {
+        let tempMsg = document.getElementById('temp-message');
+        if (!tempMsg) {
+            tempMsg = document.createElement('div');
+            tempMsg.id = 'temp-message';
+            // Estilos para la cripta (verde)
+            tempMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,100,0,0.9);color:#fff;padding:20px 40px;border-radius:10px;font-size:1.5em;z-index:1000;border:3px solid #00ff00;box-shadow:0 0 30px rgba(0,255,0,0.8);font-family:Courier New,monospace;text-align:center';
+            document.body.appendChild(tempMsg);
+        }
+        tempMsg.textContent = text;
+        tempMsg.style.display = 'block';
+        setTimeout(() => tempMsg.style.display = 'none', 2000);
+    }
+
+    /**
+     * Actualiza la UI del coleccionable en el header basado en el estado de ambos jugadores.
+     */
+    function updateCollectibleUI() {
+        if (!collectibleIndicator || !collectibleCheck || !collectibles) return;
+
+        const p1Collected = collectibles.p1.collected;
+        const p2Collected = collectibles.p2.collected;
+
+        // Limpiar clases de estado
+        collectibleIndicator.classList.remove('collectible-uncollected', 'collectible-collected', 'collectible-partial');
+
+        if (p1Collected && p2Collected) {
+            // Estado 3: Ambos jugadores han recogido el coleccionable
+            collectibleIndicator.classList.add('collectible-collected');
+            collectibleCheck.textContent = '✓';
+            localStorage.setItem('map3_collectible', 'true'); // Guardar progreso
+        } else if (p1Collected || p2Collected) {
+            // Estado 2: Solo un jugador ha recogido el coleccionable
+            collectibleIndicator.classList.add('collectible-partial'); // Nueva clase para 'iluminado'
+            collectibleCheck.textContent = '✗'; // Sigue mostrando la X
+        } else {
+            // Estado 1: Ningún jugador ha recogido el coleccionable
+            collectibleIndicator.classList.add('collectible-uncollected');
+            collectibleCheck.textContent = '✗';
+        }
+    }
+
+    /**
+     * Comprueba si el jugador ha recogido el motor.
+     * @param {Player} playerObj - La instancia del jugador.
+     * @param {number} playerIndex - El índice del jugador (0 o 1).
+     */
+    function checkCollectible(playerObj, playerIndex) {
+        if (!collectibles) return;
+        
+        const playerId = `p${playerIndex + 1}`;
+        if (!collectibles[playerId] || collectibles[playerId].collected) return;
+        
         const pos = playerObj.getGridPosition();
-        if (mazeMap[pos.row][pos.col] === 'E') winGame();
+        if (pos.row === collectiblePosition.row && pos.col === collectiblePosition.col) {
+            collectibles[playerId].collected = true;
+            
+            // Actualizar la UI para reflejar el estado (parcial o completo)
+            updateCollectibleUI();
+            
+            showTemporaryMessage(`¡Jugador ${playerIndex + 1} ha encontrado el motor! Dirígete a la salida.`);
+        }
+    }
+
+    /**
+     * Comprueba si el jugador ha llegado a la salida y tiene el motor.
+     * @param {Player} playerObj - La instancia del jugador.
+     * @param {number} playerIndex - El índice del jugador (0 o 1).
+     */
+    function checkWinCondition(playerObj, playerIndex) {
+        if (!collectibles) return;
+        
+        const playerId = `p${playerIndex + 1}`;
+        const pos = playerObj.getGridPosition();
+        if (mazeMap[pos.row][pos.col] === 'E') {
+            // Se comprueba si AMBOS jugadores han recogido el motor para ganar
+            if (collectibles.p1.collected && collectibles.p2.collected) {
+                winGame();
+            } else {
+                // Si este jugador lo tiene pero el otro no
+                if (collectibles[playerId].collected) {
+                    showTemporaryMessage(`¡Jugador ${playerIndex + 1}, espera a tu compañero!`);
+                } else {
+                    // Si este jugador no lo tiene
+                    showTemporaryMessage(`¡Jugador ${playerIndex + 1} necesita el motor ⚙️ para salir!`);
+                }
+            }
+        }
     }
     
+    /**
+     * Comprueba si el jugador está en un teletransportador y lo mueve.
+     * @param {Player} playerObj - La instancia del jugador.
+     * @param {number} playerIndex - El índice del jugador (0 o 1).
+     */
     function checkTeleport(playerObj, playerIndex) {
         const pos = playerObj.getGridPosition();
         
@@ -386,7 +624,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Comprobar condiciones y teleports para cada jugador
         multiplayerManager.players.forEach((p, idx) => {
-            checkWinCondition(p);
+            checkCollectible(p, idx); // Comprobar si recoge el motor
+            checkWinCondition(p, idx); // Comprobar si llega a la salida CON el motor
             checkTeleport(p, idx);
         });
 
@@ -400,9 +639,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         const start = GameBase.findPlayerStart(mazeMap);
         calculateSizes();
+        
+        // Inicializar el estado de los coleccionables
+        collectibles = {
+            p1: { collected: false, pulse: 0, indicatorPulse: 0 },
+            p2: { collected: false, pulse: 0, indicatorPulse: 0 }
+        };
+
+        // Establecer el estado inicial de la UI
+        updateCollectibleUI();
+        
         multiplayerManager = new MultiplayerManager(GRID_SIZE);
         multiplayerManager.drawGameWorld = function(ctx) {
+            const currentTransform = ctx.getTransform(); // Guardar transformación
             drawMaze();
+            drawCollectible(); // Dibujar el motor
+            drawExitIndicator(); // Dibujar el indicador a la salida (si aplica)
+            ctx.setTransform(currentTransform); // Restaurar transformación
         };
 
         // Buscar segunda posición inicial cerca de la primera
@@ -451,3 +704,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startGame();
 });
+
