@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ========== CONFIGURACIÓN DEL NIVEL ==========
     const LEVEL_ID = 3;
-    const TIME_LIMIT = 120; // Aumentado para dar tiempo a buscar el coleccionable
+    const TIME_LIMIT = 60; // Aumentado para dar tiempo a buscar el coleccionable
     const TELEPORT_COOLDOWN = 5000;
     
     let GRID_SIZE;

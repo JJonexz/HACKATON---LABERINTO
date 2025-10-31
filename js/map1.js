@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let GRID_SIZE;
     let player = null;
     let timerInterval;
-    let floorPattern = null; // Patrón del suelo
+    let floorPattern = null;
     let timeLeft = TIME_LIMIT;
     let multiplayerManager = null;
     
@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const keys = {};
     const cooldowns = {};
-    // lastTeleportCell ahora almacena la última celda usada por jugador (clave: 'p1','p2')
     let lastTeleportCell = {};
     let teleportCooldownActive = false;
 
@@ -91,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAZE_ROWS = mazeMap.length;
     const MAZE_COLS = mazeMap[0].length;
     
-    // Verificar posiciones de teleportadores en el mapa
+    // Verificar posiciones de teleportadores
     console.log('[MAP1] Verificando teleportadores...');
     const teleportGroups = {
         'T': [],
@@ -151,29 +150,63 @@ document.addEventListener('DOMContentLoaded', () => {
         patternCanvas.height = GRID_SIZE;
         const patternCtx = patternCanvas.getContext('2d');
 
-        // Dibujar el patrón base
-        patternCtx.fillStyle = '#DEB887';
+        // Base de tierra con pasto
+        patternCtx.fillStyle = '#d2dc8cff';
         patternCtx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
 
-        // Agregar textura de arena estática
-        patternCtx.fillStyle = 'rgba(205, 170, 125, 0.5)';
-        for(let i = 0; i < 8; i++) {
-            patternCtx.beginPath();
-            patternCtx.arc(
+        // Tierra visible
+        patternCtx.fillStyle = 'rgba(139, 115, 85, 0.4)';
+        for(let i = 0; i < 6; i++) {
+            patternCtx.fillRect(
                 Math.random() * GRID_SIZE,
                 Math.random() * GRID_SIZE,
-                1,
-                0,
-                Math.PI * 2
+                GRID_SIZE * 0.3,
+                GRID_SIZE * 0.3
             );
-            patternCtx.fill();
         }
 
         return ctx.createPattern(patternCanvas, 'repeat');
     }
 
+    // Función para dibujar arbustos
+    function drawHedge(ctx, x, y, size, row, col) {
+        const seed = row * 1000 + col;
+        
+        // Base verde oscuro
+        ctx.fillStyle = '#2F4F2F';
+        ctx.fillRect(x, y, size, size);
+        
+        // Hojas superiores más claras
+        ctx.fillStyle = '#3d5a1f';
+        for (let i = 0; i < 12; i++) {
+            const angle = (seed + i) * 0.5;
+            const offsetX = Math.cos(angle) * size * 0.3;
+            const offsetY = Math.sin(angle) * size * 0.3;
+            const leafSize = size * 0.2;
+            
+            ctx.beginPath();
+            ctx.arc(
+                x + size/2 + offsetX,
+                y + size/2 + offsetY,
+                leafSize,
+                0,
+                Math.PI * 2
+            );
+            ctx.fill();
+        }
+        
+        // Ramas secas
+        if (seed % 3 === 0) {
+            ctx.strokeStyle = '#654321';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.2, y + size * 0.8);
+            ctx.lineTo(x + size * 0.4, y + size * 0.6);
+            ctx.stroke();
+        }
+    }
+
     function drawMaze() {
-        // Crear el patrón del suelo si aún no existe
         if (!floorPattern) {
             floorPattern = createFloorPattern();
         }
@@ -185,22 +218,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const x = c * GRID_SIZE;
                 const y = r * GRID_SIZE;
 
-                switch (cell) {
-                    case 'W':
-                        GameBase.drawWall(ctx, x, y, GRID_SIZE, '#330000', '#ff1a1a');
-                        break;
-                    case 'E':
-                        GameBase.drawExit(ctx, x, y, GRID_SIZE, currentTime);
-                        break;
-                    case 'T':
-                    case 'V':
-                    case 'L':
-                        GameBase.drawTeleporter(ctx, x, y, GRID_SIZE, cell, `${r},${c}`, cooldowns, currentTime);
-                        break;
-                    default:
-                        ctx.fillStyle = floorPattern;
-                        ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
-                        break;
+                if (cell === 'W') {
+                    drawHedge(ctx, x, y, GRID_SIZE, r, c);
+                } else if (cell === 'E') {
+                    GameBase.drawExit(ctx, x, y, GRID_SIZE, currentTime);
+                } else if (cell === 'T' || cell === 'V' || cell === 'L') {
+                    GameBase.drawTeleporter(ctx, x, y, GRID_SIZE, cell, `${r},${c}`, cooldowns, currentTime);
+                } else {
+                    ctx.fillStyle = floorPattern;
+                    ctx.fillRect(x, y, GRID_SIZE, GRID_SIZE);
                 }
             }
         }
@@ -216,7 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkTeleport(playerObj, playerIndex) {
         const pos = playerObj.getGridPosition();
         
-        // Validar posición
         if (pos.row < 0 || pos.row >= MAZE_ROWS || pos.col < 0 || pos.col >= MAZE_COLS) {
             return;
         }
@@ -225,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const cellKey = `${pos.row},${pos.col}`;
         const currentTime = Date.now();
 
-        // Actualizar display de cooldown
         if (teleportCooldownActive) {
             let stillCoolingDown = false;
             let minRemaining = Infinity;
@@ -250,7 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Si no estamos en un teleporter, limpiar el registro para este jugador
         if (!teleportGroups[cellType] || teleportGroups[cellType].length === 0) {
             const keyName = 'p' + (playerObj.playerNumber || (playerIndex + 1));
             lastTeleportCell[keyName] = null;
@@ -259,12 +282,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const keyName = 'p' + (playerObj.playerNumber || (playerIndex + 1));
 
-        // Si ya estamos sobre este teleporter, no hacer nada (evita loop)
         if (lastTeleportCell[keyName] === cellKey) {
             return;
         }
 
-        // Verificar si hay cooldown activo para este teleporter
         if (cooldowns[cellKey] && cooldowns[cellKey] > currentTime) {
             return;
         }
@@ -275,7 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Encontrar teleporter actual en el grupo
         const currentTeleport = group.find(tp => tp.row === pos.row && tp.col === pos.col);
         
         if (!currentTeleport) {
@@ -283,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Obtener teleporters de destino (todos menos el actual)
         const possibleTargets = group.filter(tp => tp.row !== pos.row || tp.col !== pos.col);
 
         if (possibleTargets.length === 0) {
@@ -291,12 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Elegir destino aleatorio
         const targetTeleport = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
         
         console.log(`[MAP1] Teleportando ${cellType}: (${pos.row},${pos.col}) -> (${targetTeleport.row},${targetTeleport.col})`);
         
-        // Aplicar cooldown a TODO el grupo
         group.forEach(tp => {
             const key = `${tp.row},${tp.col}`;
             cooldowns[key] = currentTime + TELEPORT_COOLDOWN;
@@ -304,16 +321,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         teleportCooldownActive = true;
         
-        // Mostrar cooldown
         if (cooldownDisplay && cooldownTimer) {
             cooldownDisplay.style.display = 'block';
             cooldownTimer.textContent = Math.ceil(TELEPORT_COOLDOWN / 1000);
         }
 
-        // Teletransportar al centro de la celda destino
         playerObj.setGridPosition(targetTeleport.row, targetTeleport.col);
-        
-        // Marcar este teleporter como el último usado para este jugador
         lastTeleportCell[keyName] = `${targetTeleport.row},${targetTeleport.col}`;
         
         console.log(`[MAP1] Nueva posición del jugador ${keyName}: (${playerObj.x}, ${playerObj.y})`);
@@ -373,7 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
         GameBase.updateFPS(gameState, timestamp, fpsElement);
         multiplayerManager.update(keys, canMoveTo, deltaTime);
 
-        // Comprobar condiciones y teleports para cada jugador
         multiplayerManager.players.forEach((p, idx) => {
             checkWinCondition(p);
             checkTeleport(p, idx);
@@ -396,11 +408,9 @@ document.addEventListener('DOMContentLoaded', () => {
             drawMaze();
         };
 
-        // Buscar segunda posición inicial cerca de la primera
         const startPos = [];
-        startPos.push(start); // Posición del jugador 1
+        startPos.push(start);
 
-        // Buscar una posición válida adyacente para el jugador 2
         const adjacentPositions = [
             { row: start.row + 1, col: start.col },
             { row: start.row - 1, col: start.col },
@@ -417,37 +427,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Si no se encontró posición adyacente, usar la misma que el jugador 1
         if (startPos.length === 1) {
             startPos.push(start);
         }
 
         multiplayerManager.setPlayersPosition(startPos);
         player = multiplayerManager.players[0];
-        /*
-        // Ajustar zoom para ver TODO el mapa con margen
-        const availableWidth = window.innerWidth;
-        const availableHeight = window.innerHeight - 70;
-        const mapPixelWidth = canvas.width;
-        const mapPixelHeight = canvas.height;
-        
-        console.log('[MAP1] Available space:', availableWidth, 'x', availableHeight);
-        console.log('[MAP1] Map size:', mapPixelWidth, 'x', mapPixelHeight);
-        
-        if (mapPixelWidth > 0 && mapPixelHeight > 0) {
-            // Calcular zoom para que quepa todo el mapa con 10% de margen
-            const zoomX = (availableWidth * 0.9) / mapPixelWidth;
-            const zoomY = (availableHeight * 0.9) / mapPixelHeight;
-            const fitZoom = Math.min(zoomX, zoomY);
-            
-            // Asegurar un zoom mínimo razonable
-            const minZoom = 0.5;
-            const maxZoom = 3.0;
-            
-            player.cameraZoom = Math.max(minZoom, Math.min(maxZoom, fitZoom));
-            console.log('[MAP1] Zoom ajustado a:', player.cameraZoom);
-        }
-        */
         
         window.addEventListener('resize', resizeGame);
         
