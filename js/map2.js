@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const collectibleIndicator = document.getElementById('collectible-indicator');
     const collectibleCheck = document.getElementById('collectible-check');
 
+    // Elementos del Modal de Objetivo (NUEVO)
+    const objectiveOverlay = document.getElementById('objective-modal-overlay');
+    const objectiveTitle = document.getElementById('objective-title');
+    const objectiveText = document.getElementById('objective-text');
+
     // ========== CONFIGURACIÓN DEL NIVEL ==========
     const LEVEL_ID = 2;
     const TIME_LIMIT = 60;
@@ -546,68 +551,88 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.animationId = requestAnimationFrame(gameLoop);
     }
 
-    // ========== INICIO ==========
+    // ========== INICIO (MODIFICADO) ==========
     function startGame() {
-        const start = GameBase.findPlayerStart(mazeMap);
-        calculateSizes();
-        
-        // Inicializar el estado de los coleccionables
-        collectibles = {
-            p1: { collected: false, pulse: 0, indicatorPulse: 0 },
-            p2: { collected: false, pulse: 0, indicatorPulse: 0 }
-        };
-        
-        multiplayerManager = new MultiplayerManager(GRID_SIZE);
-        multiplayerManager.drawGameWorld = function(ctx, activePlayer) {
-            const currentTransform = ctx.getTransform();
-            drawMaze();
-            drawCollectible();
-            drawExitIndicator();
-            ctx.setTransform(currentTransform);
-        };
+        // Definir el objetivo
+        const missionObjective = "¡Encuentra la rueda (🎡) y llévala a la salida (E) antes de que se acabe el tiempo!";
 
-        // Buscar segunda posición inicial cerca de la primera
-        const startPos = [];
-        startPos.push(start); // Posición del jugador 1
+        // Mostrar modal de objetivo
+        if (objectiveTitle) objectiveTitle.textContent = "NIVEL 2: SANTA TERESITA";
+        if (objectiveText) objectiveText.textContent = missionObjective;
+        if (objectiveOverlay) objectiveOverlay.classList.remove('hidden');
 
-        // Buscar una posición válida adyacente para el jugador 2
-        const adjacentPositions = [
-            { row: start.row + 1, col: start.col },
-            { row: start.row - 1, col: start.col },
-            { row: start.row, col: start.col + 1 },
-            { row: start.row, col: start.col - 1 }
-        ];
+        // Ocultar el 'loading'
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
 
-        for (const pos of adjacentPositions) {
-            if (pos.row >= 0 && pos.row < MAZE_ROWS && 
-                pos.col >= 0 && pos.col < MAZE_COLS && 
-                mazeMap[pos.row][pos.col] !== 'W') {
-                startPos.push(pos);
-                break;
+        // Esperar 5 segundos
+        setTimeout(() => {
+            // Ocultar el modal de objetivo
+            if (objectiveOverlay) objectiveOverlay.classList.add('hidden');
+
+            // --- LÓGICA ORIGINAL DE STARTGAME ---
+            const start = GameBase.findPlayerStart(mazeMap);
+            calculateSizes();
+            
+            // Inicializar el estado de los coleccionables
+            collectibles = {
+                p1: { collected: false, pulse: 0, indicatorPulse: 0 },
+                p2: { collected: false, pulse: 0, indicatorPulse: 0 }
+            };
+            
+            multiplayerManager = new MultiplayerManager(GRID_SIZE);
+            multiplayerManager.drawGameWorld = function(ctx, activePlayer) {
+                const currentTransform = ctx.getTransform();
+                drawMaze();
+                drawCollectible();
+                drawExitIndicator();
+                ctx.setTransform(currentTransform);
+            };
+
+            // Buscar segunda posición inicial cerca de la primera
+            const startPos = [];
+            startPos.push(start); // Posición del jugador 1
+
+            // Buscar una posición válida adyacente para el jugador 2
+            const adjacentPositions = [
+                { row: start.row + 1, col: start.col },
+                { row: start.row - 1, col: start.col },
+                { row: start.row, col: start.col + 1 },
+                { row: start.row, col: start.col - 1 }
+            ];
+
+            for (const pos of adjacentPositions) {
+                if (pos.row >= 0 && pos.row < MAZE_ROWS && 
+                    pos.col >= 0 && pos.col < MAZE_COLS && 
+                    mazeMap[pos.row][pos.col] !== 'W') {
+                    startPos.push(pos);
+                    break;
+                }
             }
-        }
 
-        // Si no se encontró posición adyacente, usar la misma que el jugador 1
-        if (startPos.length === 1) {
-            startPos.push(start);
-        }
+            // Si no se encontró posición adyacente, usar la misma que el jugador 1
+            if (startPos.length === 1) {
+                startPos.push(start);
+            }
 
-        multiplayerManager.setPlayersPosition(startPos);
-        player = multiplayerManager.players[0];
-        window.addEventListener('resize', resizeGame);
-        
-        setTimeout(() => loadingOverlay.classList.add('hidden'), 1000);
-        
-        timerInterval = setInterval(() => {
-            if (!gameState.gameActive || gameState.isPaused) return;
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-            if (timeLeft <= 0) loseGame();
-        }, 1000);
-        
-        gameState.lastTime = 0;
-        gameState.lastFpsUpdate = performance.now();
-        gameState.animationId = requestAnimationFrame(gameLoop);
+            multiplayerManager.setPlayersPosition(startPos);
+            player = multiplayerManager.players[0];
+            window.addEventListener('resize', resizeGame);
+            
+            // Ya no necesitamos el timeout para el loading
+            
+            timerInterval = setInterval(() => {
+                if (!gameState.gameActive || gameState.isPaused) return;
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                if (timeLeft <= 0) loseGame();
+            }, 1000);
+            
+            gameState.lastTime = 0;
+            gameState.lastFpsUpdate = performance.now();
+            gameState.animationId = requestAnimationFrame(gameLoop);
+            // --- FIN LÓGICA ORIGINAL ---
+
+        }, 5000); // 5 segundos
     }
 
     startGame();

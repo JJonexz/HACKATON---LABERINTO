@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cooldownDisplay = document.getElementById('teleport-cooldown');
     const cooldownTimer = document.getElementById('cooldown-timer');
 
+    // Elementos del Modal de Objetivo (NUEVO)
+    const objectiveOverlay = document.getElementById('objective-modal-overlay');
+    const objectiveTitle = document.getElementById('objective-title');
+    const objectiveText = document.getElementById('objective-text');
+
     // ========== CONFIGURACIÓN DEL NIVEL ==========
     const LEVEL_ID = 1;
     const TIME_LIMIT = 60;
@@ -97,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "W  W W  W  W   WWWW  W  W   W   W  W  W  W  W W",
         "W  W W  W  W   W        W   W   W  W  W  W  W W",
         "W  W W  W  W   W  WW  WWW   W   W  W  W  W  W W",
-        "W  W   W  W   W   W  W      W   W  W     W  W W",
+        "W  W   W  W   W   W  W      W   W  W  W     W  W W",
         "W      W      W   W     W     W      W      W W",
         "W  WWWW  WWWW  WWWW  WWW  WWWW  WWWW  WWWW  W W",
         "W  W        W      W      W      W        W   W",
@@ -421,57 +426,77 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.animationId = requestAnimationFrame(gameLoop);
     }
 
-    // ========== INICIO ==========
+    // ========== INICIO (MODIFICADO) ==========
     function startGame() {
-        const start = GameBase.findPlayerStart(mazeMap);
-        console.log('[MAP1] Posición inicial:', start);
+        // Definir el objetivo
+        const missionObjective = "¡Encuentra la salida (E) antes de que se acabe el tiempo!";
+
+        // Mostrar modal de objetivo
+        if(objectiveTitle) objectiveTitle.textContent = "NIVEL 1: LAS TONINAS";
+        if(objectiveText) objectiveText.textContent = missionObjective;
+        if (objectiveOverlay) objectiveOverlay.classList.remove('hidden');
+
+        // Ocultar el 'loading' que está por debajo
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
         
-        calculateSizes();
-        multiplayerManager = new MultiplayerManager(GRID_SIZE);
-        multiplayerManager.drawGameWorld = function(ctx) {
-            drawMaze();
-        };
+        // Esperar 5 segundos antes de empezar el juego
+        setTimeout(() => {
+            // Ocultar el modal de objetivo
+            if (objectiveOverlay) objectiveOverlay.classList.add('hidden');
 
-        const startPos = [];
-        startPos.push(start);
+            // --- LÓGICA ORIGINAL DE STARTGAME ---
+            const start = GameBase.findPlayerStart(mazeMap);
+            console.log('[MAP1] Posición inicial:', start);
+            
+            calculateSizes();
+            multiplayerManager = new MultiplayerManager(GRID_SIZE);
+            multiplayerManager.drawGameWorld = function(ctx) {
+                drawMaze();
+            };
 
-        const adjacentPositions = [
-            { row: start.row + 1, col: start.col },
-            { row: start.row - 1, col: start.col },
-            { row: start.row, col: start.col + 1 },
-            { row: start.row, col: start.col - 1 }
-        ];
-
-        for (const pos of adjacentPositions) {
-            if (pos.row >= 0 && pos.row < MAZE_ROWS && 
-                pos.col >= 0 && pos.col < MAZE_COLS && 
-                mazeMap[pos.row][pos.col] !== 'W') {
-                startPos.push(pos);
-                break;
-            }
-        }
-
-        if (startPos.length === 1) {
+            const startPos = [];
             startPos.push(start);
-        }
 
-        multiplayerManager.setPlayersPosition(startPos);
-        player = multiplayerManager.players[0];
-        
-        window.addEventListener('resize', resizeGame);
-        
-        setTimeout(() => loadingOverlay.classList.add('hidden'), 1000);
-        
-        timerInterval = setInterval(() => {
-            if (!gameState.gameActive || gameState.isPaused) return;
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-            if (timeLeft <= 0) loseGame();
-        }, 1000);
-        
-        gameState.lastTime = 0;
-        gameState.lastFpsUpdate = performance.now();
-        gameState.animationId = requestAnimationFrame(gameLoop);
+            const adjacentPositions = [
+                { row: start.row + 1, col: start.col },
+                { row: start.row - 1, col: start.col },
+                { row: start.row, col: start.col + 1 },
+                { row: start.row, col: start.col - 1 }
+            ];
+
+            for (const pos of adjacentPositions) {
+                if (pos.row >= 0 && pos.row < MAZE_ROWS && 
+                    pos.col >= 0 && pos.col < MAZE_COLS && 
+                    mazeMap[pos.row][pos.col] !== 'W') {
+                    startPos.push(pos);
+                    break;
+                }
+            }
+
+            if (startPos.length === 1) {
+                startPos.push(start);
+            }
+
+            multiplayerManager.setPlayersPosition(startPos);
+            player = multiplayerManager.players[0];
+            
+            window.addEventListener('resize', resizeGame);
+            
+            // Ya no necesitamos el timeout para el loading
+            
+            timerInterval = setInterval(() => {
+                if (!gameState.gameActive || gameState.isPaused) return;
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                if (timeLeft <= 0) loseGame();
+            }, 1000);
+            
+            gameState.lastTime = 0;
+            gameState.lastFpsUpdate = performance.now();
+            gameState.animationId = requestAnimationFrame(gameLoop);
+            // --- FIN LÓGICA ORIGINAL ---
+
+        }, 5000); // 5 segundos de espera
     }
 
     startGame();

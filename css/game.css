@@ -360,6 +360,50 @@ body {
     transform: scale(1.08);
 }
 
+/* ========== MODAL DE OBJETIVO (NUEVO) ========== */
+#objective-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 110; /* Alto para cubrir todo */
+    animation: fadeIn var(--transition-medium);
+}
+
+#objective-modal {
+    background: #1a0000;
+    border: 3px solid var(--color-primary);
+    border-radius: 15px;
+    padding: 40px 50px;
+    text-align: center;
+    box-shadow: 
+        0 0 50px var(--color-red-bright),
+        inset 0 0 25px rgba(0, 0, 0, 0.5);
+    animation: scaleIn var(--transition-fast);
+    max-width: 600px;
+    width: 90%;
+}
+
+#objective-title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px currentColor;
+    color: var(--color-yellow);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+#objective-text {
+    font-size: 1.3rem;
+    color: #fff;
+    line-height: 1.6;
+}
+
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     .header-overlay h1 {
@@ -381,5 +425,16 @@ body {
     
     #pause-menu h1 {
         font-size: 2rem;
+    }
+
+    /* Ajustes responsive para modal de objetivo */
+    #objective-modal {
+        padding: 30px 20px;
+    }
+    #objective-title {
+        font-size: 1.8rem;
+    }
+    #objective-text {
+        font-size: 1rem;
     }
 }
