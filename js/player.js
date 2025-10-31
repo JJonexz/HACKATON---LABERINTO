@@ -54,7 +54,7 @@ class Player {
     
     // ========== CARGAR SPRITES ==========
     loadSprites() {
-        const basePath = 'sprites/player/';
+        const basePath = 'sprites/player/1/';
         
         const directions = {
             down: ['aba.png', 'aba1.png', 'aba2.png'],
