@@ -9,6 +9,7 @@ class LevelRoulette {
         ];
         this.selectedLevel = null;
         this.isSpinning = false;
+        this.availableLevels = []; // Nuevo: almacenar niveles disponibles
     }
 
     createPreview(levelId) {
@@ -149,18 +150,31 @@ class LevelRoulette {
     }
 
     populateRoulette() {
+        // Limpiar la ruleta antes de repoblar
+        this.roulette.innerHTML = '';
+        
+        // Usar solo los niveles disponibles (no jugados)
+        const levelsToShow = this.availableLevels.length > 0 
+            ? this.availableLevels 
+            : this.levels;
+        
         // Duplicar los niveles para crear el efecto de ruleta infinita
-        const allLevels = [...this.levels, ...this.levels, ...this.levels];
+        const allLevels = [...levelsToShow, ...levelsToShow, ...levelsToShow];
         allLevels.forEach(level => {
             this.roulette.appendChild(this.createCard(level));
         });
     }
 
+    // Nuevo método para establecer los niveles disponibles desde main.js
+    setAvailableLevels(availableLevelsFromMain) {
+        this.availableLevels = availableLevelsFromMain;
+        console.log('[ROULETTE] Niveles disponibles:', this.availableLevels.map(l => l.name));
+    }
+
     show() {
         this.container.classList.remove('hidden');
-        if (this.roulette.children.length === 0) {
-            this.populateRoulette();
-        }
+        // Repoblar cada vez que se muestra para reflejar cambios en disponibilidad
+        this.populateRoulette();
     }
 
     hide() {
@@ -169,16 +183,29 @@ class LevelRoulette {
 
     spin() {
         if (this.isSpinning) return;
+        
+        // Verificar que haya niveles disponibles
+        const levelsToChooseFrom = this.availableLevels.length > 0 
+            ? this.availableLevels 
+            : this.levels;
+        
+        if (levelsToChooseFrom.length === 0) {
+            console.error('[ROULETTE] No hay niveles para elegir');
+            return;
+        }
+        
         this.isSpinning = true;
 
-        // Elegir un nivel aleatorio
-        const randomIndex = Math.floor(Math.random() * this.levels.length);
-        this.selectedLevel = this.levels[randomIndex];
+        // Elegir un nivel aleatorio SOLO de los disponibles
+        const randomIndex = Math.floor(Math.random() * levelsToChooseFrom.length);
+        this.selectedLevel = levelsToChooseFrom[randomIndex];
+        
+        console.log('[ROULETTE] Nivel seleccionado:', this.selectedLevel.name, 'ID:', this.selectedLevel.id);
 
         // Calcular la posición final para centrar el nivel seleccionado
         const cardWidth = 270; // ancho de la tarjeta + gap
         const centerOffset = (this.container.offsetWidth - cardWidth) / 2;
-        const targetOffset = -(cardWidth * (this.levels.length + randomIndex)) + centerOffset;
+        const targetOffset = -(cardWidth * (levelsToChooseFrom.length + randomIndex)) + centerOffset;
 
         // Aplicar la animación
         this.roulette.style.transform = `translateX(${targetOffset}px)`;
