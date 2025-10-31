@@ -146,9 +146,7 @@ body {
 /* ========== MENÚ DE PAUSA ========== */
 #pause-menu {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 12%;
     z-index: 100;
     font-family: var(--font-main);
     color: var(--color-primary);

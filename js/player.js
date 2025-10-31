@@ -11,7 +11,7 @@ class Player {
         this.gridSize = gridSize;
         
         // ========== MOVIMIENTO ==========
-        this.speed = gridSize / 4;
+        this.speed = gridSize / 6;
         this.dx = 0;
         this.dy = 0;
         this.isMoving = false;

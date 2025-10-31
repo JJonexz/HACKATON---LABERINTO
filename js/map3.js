@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dx = exitX - player.x;
         const dy = exitY - player.y;
         const angle = Math.atan2(dy, dx);
-        const distance = 80; // Distancia desde el jugador
+        const distance = 8000; // Distancia desde el jugador
         const indicatorX = player.x + Math.cos(angle) * distance;
         const indicatorY = player.y + Math.sin(angle) * distance;
         
