@@ -19,14 +19,27 @@
                 <div id="progress-info">
                     NIVELES COMPLETADOS: <span id="levels-completed">0</span>/3
                 </div>
+                <div class="header-buttons">
+                    <button id="music-toggle" class="header-btn" title="Música">
+                        🔇
+                    </button>
+                    <button id="instructions-toggle" class="header-btn" title="Ver Instrucciones">
+                        ❓
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Canvas del selector -->
         <canvas id="selectorCanvas"></canvas>
 
-        <!-- Instrucciones -->
-        <div id="instructions-overlay">
+        <!-- Audio de fondo -->
+        <audio id="background-music" loop>
+            <source src="audio/suspenso.mp3" type="audio/mp3">
+        </audio>
+
+        <!-- Instrucciones (ahora ocultas por defecto) -->
+        <div id="instructions-overlay" class="hidden">
             <div class="instruction-box">
                 <h2>INSTRUCCIONES</h2>
                 <p>Muévete con <strong>WASD</strong> o <strong>Flechas</strong></p>
@@ -34,7 +47,7 @@
                 <p>Los niveles jugados no se repiten hasta completar todos</p>
                 <p>Presiona <strong>ESC</strong> para abrir el menú</p>
                 <p class="warning">¡Completa los 3 niveles para escapar definitivamente!</p>
-                <button id="start-button" class="main-button">COMENZAR</button>
+                <button id="close-instructions" class="main-button">CERRAR</button>
             </div>
         </div>
 

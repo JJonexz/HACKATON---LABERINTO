@@ -364,3 +364,56 @@ canvas.paused {
         font-size: 1rem;
     }
 }
+
+/* Botones del header */
+.header-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.header-btn {
+    background: rgba(180, 68, 0, 0.8);
+    border: 2px solid #ad0000;
+    color: #fff;
+    font-size: 1.5rem;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(180, 68, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.header-btn:hover {
+    background: rgba(231, 112, 24, 0.9);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(231, 112, 24, 0.8);
+}
+
+.header-btn:active {
+    transform: scale(1.05);
+}
+
+.header-btn.active {
+    background: rgba(0, 180, 0, 0.8);
+    border-color: #00ff00;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+}
+
+/* Actualizar responsive */
+@media (max-width: 768px) {
+    .header-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.3rem;
+    }
+
+    .header-buttons {
+        gap: 10px;
+    }
+}

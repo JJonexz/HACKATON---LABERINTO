@@ -9,7 +9,7 @@ class LevelRoulette {
         ];
         this.selectedLevel = null;
         this.isSpinning = false;
-        this.availableLevels = []; // Nuevo: almacenar niveles disponibles
+        this.availableLevels = [];
     }
 
     createPreview(levelId) {
@@ -18,7 +18,6 @@ class LevelRoulette {
         canvas.height = 150;
         const ctx = canvas.getContext('2d');
         
-        // Obtener el mapa correcto según el nivel
         const map = this.getLevelMap(levelId);
         this.drawMapPreview(ctx, map);
         
@@ -26,7 +25,6 @@ class LevelRoulette {
     }
 
     getLevelMap(levelId) {
-        // Mapas simplificados para las previsualizaciones
         const maps = {
             1: [
                 "WWWWWWWWWW",
@@ -150,22 +148,18 @@ class LevelRoulette {
     }
 
     populateRoulette() {
-        // Limpiar la ruleta antes de repoblar
         this.roulette.innerHTML = '';
         
-        // Usar solo los niveles disponibles (no jugados)
         const levelsToShow = this.availableLevels.length > 0 
             ? this.availableLevels 
             : this.levels;
         
-        // Duplicar los niveles para crear el efecto de ruleta infinita
         const allLevels = [...levelsToShow, ...levelsToShow, ...levelsToShow];
         allLevels.forEach(level => {
             this.roulette.appendChild(this.createCard(level));
         });
     }
 
-    // Nuevo método para establecer los niveles disponibles desde main.js
     setAvailableLevels(availableLevelsFromMain) {
         this.availableLevels = availableLevelsFromMain;
         console.log('[ROULETTE] Niveles disponibles:', this.availableLevels.map(l => l.name));
@@ -173,7 +167,6 @@ class LevelRoulette {
 
     show() {
         this.container.classList.remove('hidden');
-        // Repoblar cada vez que se muestra para reflejar cambios en disponibilidad
         this.populateRoulette();
     }
 
@@ -184,7 +177,6 @@ class LevelRoulette {
     spin() {
         if (this.isSpinning) return;
         
-        // Verificar que haya niveles disponibles
         const levelsToChooseFrom = this.availableLevels.length > 0 
             ? this.availableLevels 
             : this.levels;
@@ -196,21 +188,17 @@ class LevelRoulette {
         
         this.isSpinning = true;
 
-        // Elegir un nivel aleatorio SOLO de los disponibles
         const randomIndex = Math.floor(Math.random() * levelsToChooseFrom.length);
         this.selectedLevel = levelsToChooseFrom[randomIndex];
         
         console.log('[ROULETTE] Nivel seleccionado:', this.selectedLevel.name, 'ID:', this.selectedLevel.id);
 
-        // Calcular la posición final para centrar el nivel seleccionado
-        const cardWidth = 270; // ancho de la tarjeta + gap
+        const cardWidth = 270;
         const centerOffset = (this.container.offsetWidth - cardWidth) / 2;
         const targetOffset = -(cardWidth * (levelsToChooseFrom.length + randomIndex)) + centerOffset;
 
-        // Aplicar la animación
         this.roulette.style.transform = `translateX(${targetOffset}px)`;
 
-        // Esperar a que termine la animación
         setTimeout(() => {
             const cards = this.roulette.getElementsByClassName('level-card');
             Array.from(cards).forEach(card => {
@@ -221,7 +209,6 @@ class LevelRoulette {
             });
             this.isSpinning = false;
             
-            // Disparar evento de selección
             const event = new CustomEvent('levelSelected', {
                 detail: { levelId: this.selectedLevel.id }
             });
@@ -230,5 +217,4 @@ class LevelRoulette {
     }
 }
 
-// Exportar la clase para usarla en main.js
 window.LevelRoulette = LevelRoulette;

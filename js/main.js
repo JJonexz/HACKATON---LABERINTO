@@ -4,7 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('selectorCanvas');
     const ctx = canvas.getContext('2d');
     const instructionsOverlay = document.getElementById('instructions-overlay');
-    const startButton = document.getElementById('start-button');
+    const closeInstructionsBtn = document.getElementById('close-instructions');
+    const instructionsToggleBtn = document.getElementById('instructions-toggle');
+    const musicToggleBtn = document.getElementById('music-toggle');
+    const backgroundMusic = document.getElementById('background-music');
     const loadingOverlay = document.getElementById('loading-overlay');
     
     let GRID_SIZE = 40;
@@ -12,6 +15,47 @@ document.addEventListener('DOMContentLoaded', () => {
     let animationId;
     let playerManager = null;
     let currentDoorProximity = null;
+    let isMusicPlaying = false;
+
+    // ========== SISTEMA DE MÚSICA ==========
+    function toggleMusic() {
+        if (isMusicPlaying) {
+            backgroundMusic.pause();
+            musicToggleBtn.textContent = '🔇';
+            musicToggleBtn.classList.remove('active');
+            isMusicPlaying = false;
+        } else {
+            backgroundMusic.play().catch(err => {
+                console.log('Error al reproducir música:', err);
+            });
+            musicToggleBtn.textContent = '🔊';
+            musicToggleBtn.classList.add('active');
+            isMusicPlaying = true;
+        }
+    }
+
+    musicToggleBtn.addEventListener('click', toggleMusic);
+
+    // ========== SISTEMA DE INSTRUCCIONES ==========
+    function showInstructions() {
+        instructionsOverlay.classList.remove('hidden');
+        gameActive = false;
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+    }
+
+    function hideInstructions() {
+        instructionsOverlay.classList.add('hidden');
+        if (!animationId && playerManager) {
+            gameActive = true;
+            animationId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    instructionsToggleBtn.addEventListener('click', showInstructions);
+    closeInstructionsBtn.addEventListener('click', hideInstructions);
 
     // ========== SISTEMA DE NIVELES Y PROGRESO V2.0 ==========
     const levels = [
@@ -107,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         keys[e.key] = true;
-        console.log('Tecla presionada:', e.key); // Agregar log para depuración
+        console.log('Tecla presionada:', e.key);
         
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'z', 'Z', 'm', 'M'].includes(e.key)) {
             e.preventDefault();
@@ -236,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (chosenLevel && !progress.playedThisSession.includes(chosenLevel.id)) {
                     progress.playedThisSession.push(chosenLevel.id);
                     localStorage.setItem('gameProgress', JSON.stringify(progress));
+                    console.log('[MAIN] Nivel jugado agregado:', chosenLevel.id, 'Sesión actual:', progress.playedThisSession);
                 }
                 setTimeout(() => {
                     levelRoulette.hide();
@@ -244,6 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // CRÍTICO: Pasar los niveles disponibles a la ruleta antes de mostrarla
+        levelRoulette.setAvailableLevels(availableLevels);
         levelRoulette.show();
         setTimeout(() => levelRoulette.spin(), 500);
     }
@@ -350,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Configurar posiciones iniciales para todos los jugadores
         const startPositions = [
             { row: playerStartRow, col: playerStartCol },
-            { row: playerStartRow, col: playerStartCol + 1 } // El segundo jugador empieza al lado del primero
+            { row: playerStartRow, col: playerStartCol + 1 }
         ];
         playerManager.setPlayersPosition(startPositions);
 
@@ -366,9 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         animationId = requestAnimationFrame(gameLoop);
     }
     
-    startButton.addEventListener('click', () => {
-        instructionsOverlay.classList.add('hidden');
-        startGame();
-    });
+    // Iniciar el juego automáticamente (sin overlay de instrucciones)
+    startGame();
 
 });

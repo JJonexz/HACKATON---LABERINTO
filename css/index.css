@@ -173,7 +173,7 @@ box-sizing: border-box;
         0 0 40px rgba(173, 0, 0, 0.5),
         3px 3px 10px rgba(0, 0, 0, 0.8);
     letter-spacing: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 60px;
     animation: flicker 3s infinite alternate;
     font-weight: bold;
     }
